@@ -1,0 +1,7 @@
+# first line comment # end
+# a full line comment #
+'somefile1.txt' -> IN Read(ReadFile) OUT ->  IN Split(SplitLines) #
+Split() OUT ->  IN Count(Counter)  COUNT   -> IN  Display(Output)  # an end of line comment
+# another full line comment
+Read ERROR -> IN Display() # comment on last line
+# additional comment line
