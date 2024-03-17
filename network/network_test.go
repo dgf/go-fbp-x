@@ -1,4 +1,4 @@
-package process_test
+package network_test
 
 import (
 	"strings"
@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/dgf/go-fbp-x/dsl"
-	"github.com/dgf/go-fbp-x/process"
+	"github.com/dgf/go-fbp-x/network"
 )
 
 func TestRun(t *testing.T) {
@@ -15,14 +15,14 @@ func TestRun(t *testing.T) {
 		fbp  string
 		exp  string
 	}{
-		{"output data input", "'test' -> IN Display(Output)", "test"},
+		{"output data input", "'test' -> IN Display(OutputText)", "test"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			out := make(chan string, 1)
 
 			if graph, err := dsl.Parse(strings.NewReader(tc.fbp)); err != nil {
 				t.Errorf("Parse failed: %v", err)
-			} else if network, err := process.Create(graph, out); err != nil {
+			} else if network, err := network.Create(graph, out); err != nil {
 				t.Errorf("Create failed: %v", err)
 			} else if err := network.Run(); err != nil {
 				t.Errorf("Run failed: %v", err)

@@ -1,30 +1,26 @@
-package process
+package network
 
 import (
 	"fmt"
 
 	"github.com/dgf/go-fbp-x/dsl"
+	"github.com/dgf/go-fbp-x/process"
 )
 
 type Network struct {
-	components map[string]Process
-	dataInputs []func()
+	components map[string]process.Process
+	initialIPs []func()
 }
 
-type Process interface {
-	Inputs() map[string]chan<- string
-	Outputs() map[string]<-chan string
-}
-
-func initLibrary(out chan<- string) map[string]func() Process {
-	processes := map[string]func() Process{}
-	processes["Output"] = func() Process { return Output(out) }
-	processes["ReadFile"] = func() Process { return ReadFile() }
+func initLibrary(out chan<- string) map[string]func() process.Process {
+	processes := map[string]func() process.Process{}
+	processes["OutputText"] = func() process.Process { return process.OutputText(out) }
+	processes["ReadFile"] = func() process.Process { return process.ReadFile() }
 	return processes
 }
 
-func referenceComponents(graph dsl.Graph, processes map[string]func() Process) (map[string]Process, error) {
-	components := map[string]Process{}
+func referenceComponents(graph dsl.Graph, processes map[string]func() process.Process) (map[string]process.Process, error) {
+	components := map[string]process.Process{}
 	for c, p := range graph.Components {
 		if process, ok := processes[p]; !ok {
 			return components, fmt.Errorf("process %q not available", p)
@@ -51,16 +47,18 @@ func Create(graph dsl.Graph, out chan<- string) (*Network, error) {
 		} else if input, ok := target.Inputs()[c.Target.Port]; !ok {
 			return network, fmt.Errorf("input %q on target %q not available", c.Target.Port, c.Target.Component)
 		} else {
-			if len(c.Data) > 0 {
-				network.dataInputs = append(network.dataInputs, func() { input <- c.Data })
+			if len(c.Data) > 0 { // TODO validate string input
+				network.initialIPs = append(network.initialIPs, func() { input.Stream <- c.Data })
 			} else if source, ok := network.components[c.Source.Component]; !ok {
 				return network, fmt.Errorf("source %q not registered", c.Source.Component)
 			} else if output, ok := source.Outputs()[c.Source.Port]; !ok {
 				return network, fmt.Errorf("output %q on source %q not available", c.Source.Port, c.Source.Component)
+			} else if input.Kind != output.Kind {
+				return network, fmt.Errorf("unmatched connection type from %v to %v", c.Source, c.Target)
 			} else {
 				go func() {
-					for value := range output {
-						input <- value
+					for value := range output.Stream {
+						input.Stream <- value
 					}
 				}()
 			}
@@ -71,7 +69,7 @@ func Create(graph dsl.Graph, out chan<- string) (*Network, error) {
 }
 
 func (n *Network) Run() error {
-	for _, i := range n.dataInputs {
+	for _, i := range n.initialIPs {
 		go func(init func()) { init() }(i)
 	}
 

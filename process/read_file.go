@@ -7,19 +7,21 @@ import (
 )
 
 type readFile struct {
-	ins  map[string]chan<- string
-	outs map[string]<-chan string
+	ins  map[string]Input
+	outs map[string]Output
 }
 
 func ReadFile() Process {
-	in := make(chan string, 1)
-	out := make(chan string, 1)
-	errs := make(chan string, 1)
+	in := make(chan any, 1)
+	out := make(chan any, 1)
+	errs := make(chan any, 1)
 
 	go func() {
 		for i := range in {
 			fmt.Println("read file:", i)
-			if file, err := os.Open(i); err != nil {
+			if s, ok := i.(string); !ok {
+				panic(fmt.Sprintf("Invalid input %q", i))
+			} else if file, err := os.Open(s); err != nil {
 				errs <- err.Error()
 			} else if data, err := io.ReadAll(file); err != nil {
 				errs <- err.Error()
@@ -30,15 +32,20 @@ func ReadFile() Process {
 	}()
 
 	return &readFile{
-		ins:  map[string]chan<- string{"in": in},
-		outs: map[string]<-chan string{"out": out, "error": errs},
+		ins: map[string]Input{
+			"in": {Stream: in, Kind: StringIP},
+		},
+		outs: map[string]Output{
+			"out":   {Stream: out, Kind: StringIP},
+			"error": {Stream: errs, Kind: StringIP},
+		},
 	}
 }
 
-func (rf *readFile) Inputs() map[string]chan<- string {
+func (rf *readFile) Inputs() map[string]Input {
 	return rf.ins
 }
 
-func (rf *readFile) Outputs() map[string]<-chan string {
+func (rf *readFile) Outputs() map[string]Output {
 	return rf.outs
 }
