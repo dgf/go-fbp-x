@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 type readFile struct {
@@ -18,7 +19,6 @@ func ReadFile() Process {
 
 	go func() {
 		for i := range in {
-			fmt.Println("read file:", i)
 			if s, ok := i.(string); !ok {
 				panic(fmt.Sprintf("Invalid input %q", i))
 			} else if file, err := os.Open(s); err != nil {
@@ -26,7 +26,7 @@ func ReadFile() Process {
 			} else if data, err := io.ReadAll(file); err != nil {
 				errs <- err.Error()
 			} else {
-				out <- string(data)
+				out <- strings.TrimRight(strings.TrimRight(string(data), "\n"), "\r")
 			}
 		}
 	}()

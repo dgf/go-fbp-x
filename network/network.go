@@ -14,8 +14,12 @@ type Network struct {
 
 func initLibrary(out chan<- string) map[string]func() process.Process {
 	processes := map[string]func() process.Process{}
+
+	processes["Counter"] = func() process.Process { return process.Counter() }
 	processes["OutputText"] = func() process.Process { return process.OutputText(out) }
 	processes["ReadFile"] = func() process.Process { return process.ReadFile() }
+	processes["SplitLines"] = func() process.Process { return process.SplitLines() }
+
 	return processes
 }
 
@@ -53,7 +57,7 @@ func Create(graph dsl.Graph, out chan<- string) (*Network, error) {
 				return network, fmt.Errorf("source %q not registered", c.Source.Component)
 			} else if output, ok := source.Outputs()[c.Source.Port]; !ok {
 				return network, fmt.Errorf("output %q on source %q not available", c.Source.Port, c.Source.Component)
-			} else if input.IPType != output.IPType {
+			} else if !process.IsCompatibleIPType(output.IPType, input.IPType) {
 				return network, fmt.Errorf("unmatched connection type from %v to %v", c.Source, c.Target)
 			} else {
 				go func() {

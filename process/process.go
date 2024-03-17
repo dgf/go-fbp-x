@@ -3,7 +3,8 @@ package process
 type IPType int64
 
 const (
-	NumberIP IPType = iota
+	AnyIP IPType = iota
+	NumberIP
 	StringIP
 	StringSliceIP
 	AnySliceIP
@@ -22,4 +23,17 @@ type Output struct {
 type Process interface {
 	Inputs() map[string]Input
 	Outputs() map[string]Output
+}
+
+func IsCompatibleIPType(source IPType, target IPType) bool {
+	if source == target {
+		return true
+	}
+	if target == AnyIP {
+		return true
+	}
+	if target == AnySliceIP && source == StringSliceIP {
+		return true
+	}
+	return false
 }

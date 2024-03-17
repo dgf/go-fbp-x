@@ -1,6 +1,9 @@
 package process
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 type outputText struct {
 	ins  map[string]Input
@@ -12,16 +15,18 @@ func OutputText(out chan<- string) Process {
 
 	go func() {
 		for i := range in {
-			if s, ok := i.(string); !ok {
-				panic(fmt.Sprintf("Invalid input %q", i))
-			} else {
+			if s, ok := i.(string); ok {
 				out <- s
+			} else if n, ok := i.(int); ok {
+				out <- strconv.Itoa(n)
+			} else {
+				panic(fmt.Sprintf("Invalid input %q", i))
 			}
 		}
 	}()
 
 	return &outputText{
-		ins:  map[string]Input{"in": {Channel: in, IPType: StringIP}},
+		ins:  map[string]Input{"in": {Channel: in, IPType: AnyIP}},
 		outs: map[string]Output{},
 	}
 }

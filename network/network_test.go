@@ -12,10 +12,17 @@ import (
 func TestRun(t *testing.T) {
 	for _, tc := range []struct {
 		name string
-		fbp  string
 		exp  string
+		fbp  string
 	}{
-		{"output data input", "'test' -> IN Display(OutputText)", "test"},
+		{"output data input", "test", "'test' -> IN Display(OutputText)"},
+		{"unknown file", "open not-found.txt: no such file or directory", `
+                'not-found.txt' -> IN Read(ReadFile) ERROR -> IN Display(OutputText)`},
+		{"count lines of text file", "3", `
+                'testdata/three-lines.txt' -> IN Read(ReadFile)
+                Read OUT -> IN Split(SplitLines) OUT -> IN Count(Counter)
+                Count OUT -> IN Display(OutputText)
+                Read ERROR -> IN Display`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			out := make(chan string, 1)
