@@ -48,17 +48,17 @@ func Create(graph dsl.Graph, out chan<- string) (*Network, error) {
 			return network, fmt.Errorf("input %q on target %q not available", c.Target.Port, c.Target.Component)
 		} else {
 			if len(c.Data) > 0 { // TODO validate string input
-				network.initialIPs = append(network.initialIPs, func() { input.Stream <- c.Data })
+				network.initialIPs = append(network.initialIPs, func() { input.Channel <- c.Data })
 			} else if source, ok := network.components[c.Source.Component]; !ok {
 				return network, fmt.Errorf("source %q not registered", c.Source.Component)
 			} else if output, ok := source.Outputs()[c.Source.Port]; !ok {
 				return network, fmt.Errorf("output %q on source %q not available", c.Source.Port, c.Source.Component)
-			} else if input.Kind != output.Kind {
+			} else if input.IPType != output.IPType {
 				return network, fmt.Errorf("unmatched connection type from %v to %v", c.Source, c.Target)
 			} else {
 				go func() {
-					for value := range output.Stream {
-						input.Stream <- value
+					for value := range output.Channel {
+						input.Channel <- value
 					}
 				}()
 			}

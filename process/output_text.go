@@ -21,7 +21,7 @@ func OutputText(out chan<- string) Process {
 	}()
 
 	return &outputText{
-		ins:  map[string]Input{"in": {Stream: in, Kind: StringIP}},
+		ins:  map[string]Input{"in": {Channel: in, IPType: StringIP}},
 		outs: map[string]Output{},
 	}
 }

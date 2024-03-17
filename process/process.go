@@ -5,16 +5,18 @@ type IPType int64
 const (
 	NumberIP IPType = iota
 	StringIP
+	StringSliceIP
+	AnySliceIP
 )
 
 type Input struct {
-	Stream chan<- any
-	Kind   IPType
+	Channel chan<- any
+	IPType
 }
 
 type Output struct {
-	Stream <-chan any
-	Kind   IPType
+	Channel <-chan any
+	IPType
 }
 
 type Process interface {

@@ -33,11 +33,11 @@ func ReadFile() Process {
 
 	return &readFile{
 		ins: map[string]Input{
-			"in": {Stream: in, Kind: StringIP},
+			"in": {Channel: in, IPType: StringIP},
 		},
 		outs: map[string]Output{
-			"out":   {Stream: out, Kind: StringIP},
-			"error": {Stream: errs, Kind: StringIP},
+			"out":   {Channel: out, IPType: StringIP},
+			"error": {Channel: errs, IPType: StringIP},
 		},
 	}
 }
