@@ -62,7 +62,7 @@ func TestParse(t *testing.T) {
 }
 
 func TestParse_ExampleFile(t *testing.T) {
-	if file, err := os.Open("example.fbp"); err != nil {
+	if file, err := os.Open("testdata/example.fbp"); err != nil {
 		t.Fatal(err)
 	} else if graph, err := dsl.Parse(file); err != nil {
 		t.Fatal(err)
