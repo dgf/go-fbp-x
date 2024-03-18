@@ -7,72 +7,87 @@ import (
 	"github.com/dgf/go-fbp-x/process"
 )
 
+type Stream struct {
+	source <-chan any
+	target chan<- any
+}
+
 type Network struct {
-	components map[string]process.Process
+	factory    map[string]func() process.Process
+	processes  map[string]process.Process
 	initialIPs []func()
+	streams    []Stream
 }
 
-func initLibrary(out chan<- string) map[string]func() process.Process {
-	processes := map[string]func() process.Process{}
+func (n *Network) init(out chan<- string) {
+	n.factory = map[string]func() process.Process{}
 
-	processes["Counter"] = func() process.Process { return process.Counter() }
-	processes["OutputText"] = func() process.Process { return process.OutputText(out) }
-	processes["ReadFile"] = func() process.Process { return process.ReadFile() }
-	processes["SplitLines"] = func() process.Process { return process.SplitLines() }
-
-	return processes
+	n.factory["Counter"] = func() process.Process { return process.Counter() }
+	n.factory["OutputText"] = func() process.Process { return process.OutputText(out) }
+	n.factory["ReadFile"] = func() process.Process { return process.ReadFile() }
+	n.factory["SplitLines"] = func() process.Process { return process.SplitLines() }
 }
 
-func referenceComponents(graph dsl.Graph, processes map[string]func() process.Process) (map[string]process.Process, error) {
-	components := map[string]process.Process{}
-	for c, p := range graph.Components {
-		if process, ok := processes[p]; !ok {
-			return components, fmt.Errorf("process %q not available", p)
+func (n *Network) reference(components map[string]string) error {
+	n.processes = map[string]process.Process{}
+
+	for component, process := range components {
+		if factory, ok := n.factory[process]; !ok {
+			return fmt.Errorf("process %q not available", process)
 		} else {
-			components[c] = process()
+			n.processes[component] = factory()
 		}
 	}
-	return components, nil
+
+	return nil
+}
+
+func (n *Network) connect(connections []dsl.Connection) error {
+	n.streams = []Stream{}
+
+	for _, c := range connections {
+		if target, ok := n.processes[c.Target.Component]; !ok {
+			return fmt.Errorf("target %q not registered", c.Target.Component)
+		} else if input, ok := target.Inputs()[c.Target.Port]; !ok {
+			return fmt.Errorf("input %q on target %q not available", c.Target.Port, c.Target.Component)
+		} else if len(c.Data) > 0 {
+			n.initialIPs = append(n.initialIPs, func() { input.Channel <- c.Data })
+		} else if source, ok := n.processes[c.Source.Component]; !ok {
+			return fmt.Errorf("source %q not registered", c.Source.Component)
+		} else if output, ok := source.Outputs()[c.Source.Port]; !ok {
+			return fmt.Errorf("output %q on source %q not available", c.Source.Port, c.Source.Component)
+		} else if !process.IsCompatibleIPType(output.IPType, input.IPType) {
+			return fmt.Errorf("unmatched connection type from %v to %v", c.Source, c.Target)
+		} else {
+			n.streams = append(n.streams, Stream{output.Channel, input.Channel})
+		}
+	}
+
+	return nil
 }
 
 func Create(graph dsl.Graph, out chan<- string) (*Network, error) {
 	network := &Network{}
-	processes := initLibrary(out)
+	network.init(out)
 
-	components, err := referenceComponents(graph, processes)
-	if err != nil {
+	if err := network.reference(graph.Components); err != nil {
 		return network, err
+	} else if err := network.connect(graph.Connections); err != nil {
+		return network, err
+	} else {
+		return network, nil
 	}
-	network.components = components
-
-	for _, c := range graph.Connections {
-		if target, ok := network.components[c.Target.Component]; !ok {
-			return network, fmt.Errorf("target %q not registered", c.Target.Component)
-		} else if input, ok := target.Inputs()[c.Target.Port]; !ok {
-			return network, fmt.Errorf("input %q on target %q not available", c.Target.Port, c.Target.Component)
-		} else {
-			if len(c.Data) > 0 { // TODO validate string input
-				network.initialIPs = append(network.initialIPs, func() { input.Channel <- c.Data })
-			} else if source, ok := network.components[c.Source.Component]; !ok {
-				return network, fmt.Errorf("source %q not registered", c.Source.Component)
-			} else if output, ok := source.Outputs()[c.Source.Port]; !ok {
-				return network, fmt.Errorf("output %q on source %q not available", c.Source.Port, c.Source.Component)
-			} else if !process.IsCompatibleIPType(output.IPType, input.IPType) {
-				return network, fmt.Errorf("unmatched connection type from %v to %v", c.Source, c.Target)
-			} else {
-				go func() {
-					for value := range output.Channel {
-						input.Channel <- value
-					}
-				}()
-			}
-		}
-	}
-
-	return network, nil
 }
 
 func (n *Network) Run() error {
+	for _, s := range n.streams {
+		go func(source <-chan any, target chan<- any) {
+			for value := range source {
+				target <- value
+			}
+		}(s.source, s.target)
+	}
+
 	for _, i := range n.initialIPs {
 		go func(init func()) { init() }(i)
 	}
