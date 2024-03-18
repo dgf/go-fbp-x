@@ -16,7 +16,6 @@ import (
 var (
 	commentMatch    = regexp.MustCompile("(?m)#.*$")
 	connectionSplit = regexp.MustCompile("->")
-	lineSplit       = regexp.MustCompile("(?m)$")
 	spacesMatch     = regexp.MustCompile("[\t\f\r ]+")
 )
 

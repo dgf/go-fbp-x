@@ -19,14 +19,16 @@ func SplitLines() Process {
 			if s, ok := i.(string); !ok {
 				panic(fmt.Sprintf("Invalid input %q", i))
 			} else {
-				out <- strings.Split(strings.ReplaceAll(s, "\r\n", "\n"), "\n")
+				for _, l := range strings.Split(strings.ReplaceAll(s, "\r\n", "\n"), "\n") {
+					out <- l
+				}
 			}
 		}
 	}()
 
 	return &outputText{
 		ins:  map[string]Input{"in": {Channel: in, IPType: StringIP}},
-		outs: map[string]Output{"out": {Channel: out, IPType: StringSliceIP}},
+		outs: map[string]Output{"out": {Channel: out, IPType: StringIP}},
 	}
 }
 

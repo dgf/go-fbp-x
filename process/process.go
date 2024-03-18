@@ -6,8 +6,6 @@ const (
 	AnyIP IPType = iota
 	NumberIP
 	StringIP
-	StringSliceIP
-	AnySliceIP
 )
 
 type Input struct {
@@ -26,14 +24,5 @@ type Process interface {
 }
 
 func IsCompatibleIPType(source IPType, target IPType) bool {
-	if source == target {
-		return true
-	}
-	if target == AnyIP {
-		return true
-	}
-	if target == AnySliceIP && source == StringSliceIP {
-		return true
-	}
-	return false
+	return source == target || target == AnyIP
 }

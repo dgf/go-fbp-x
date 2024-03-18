@@ -1,9 +1,5 @@
 package process
 
-import (
-	"reflect"
-)
-
 type counter struct {
 	ins  map[string]Input
 	outs map[string]Output
@@ -12,15 +8,17 @@ type counter struct {
 func Counter() Process {
 	in := make(chan any, 1)
 	out := make(chan any, 1)
+	count := 0
 
 	go func() {
-		for i := range in {
-			out <- reflect.ValueOf(i).Len()
+		for range in {
+			count++
+			out <- count
 		}
 	}()
 
 	return &outputText{
-		ins:  map[string]Input{"in": {Channel: in, IPType: AnySliceIP}},
+		ins:  map[string]Input{"in": {Channel: in, IPType: AnyIP}},
 		outs: map[string]Output{"out": {Channel: out, IPType: NumberIP}},
 	}
 }

@@ -1,6 +1,7 @@
 package network_test
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -12,13 +13,13 @@ import (
 func TestRun(t *testing.T) {
 	for _, tc := range []struct {
 		name string
-		exp  string
 		fbp  string
+		out  []string
 	}{
-		{"output data input", "test", "'test' -> IN Display(OutputText)"},
-		{"unknown file", "open not-found.txt: no such file or directory", `
+		{name: "output data input", out: []string{"test"}, fbp: "'test' -> IN Display(OutputText)"},
+		{name: "unknown file", out: []string{"open not-found.txt: no such file or directory"}, fbp: `
                 'not-found.txt' -> IN Read(ReadFile) ERROR -> IN Display(OutputText)`},
-		{"count lines of text file", "3", `
+		{name: "count lines of text file", out: []string{"1", "2", "3"}, fbp: `
                 'testdata/three-lines.txt' -> IN Read(ReadFile)
                 Read OUT -> IN Split(SplitLines) OUT -> IN Count(Counter)
                 Count OUT -> IN Display(OutputText)
@@ -26,6 +27,7 @@ func TestRun(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			out := make(chan string, 1)
+			act := make(chan []string, 1)
 
 			if graph, err := dsl.Parse(strings.NewReader(tc.fbp)); err != nil {
 				t.Errorf("Parse failed: %v", err)
@@ -35,12 +37,20 @@ func TestRun(t *testing.T) {
 				network.Run()
 			}
 
+			go func() {
+				a := make([]string, len(tc.out))
+				for i := range len(tc.out) {
+					a[i] = <-out
+				}
+				act <- a
+			}()
+
 			select {
 			case <-time.After(37 * time.Millisecond):
 				t.Error("Timeout Run")
-			case act := <-out:
-				if act != tc.exp {
-					t.Errorf("Run failed got: %q, want: %q", act, tc.exp)
+			case a := <-act:
+				if !reflect.DeepEqual(a, tc.out) {
+					t.Errorf("Run failed got: %q, want: %q", a, tc.out)
 				}
 			}
 		})
