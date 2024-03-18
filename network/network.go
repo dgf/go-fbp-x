@@ -7,7 +7,12 @@ import (
 	"github.com/dgf/go-fbp-x/process"
 )
 
-type Stream struct {
+type packet struct {
+	target chan<- any
+	data   string
+}
+
+type stream struct {
 	source <-chan any
 	target chan<- any
 }
@@ -15,8 +20,8 @@ type Stream struct {
 type Network struct {
 	factory    map[string]func() process.Process
 	processes  map[string]process.Process
-	initialIPs []func()
-	streams    []Stream
+	initialIPs []packet
+	streams    []stream
 }
 
 func (n *Network) init(out chan<- string) {
@@ -43,7 +48,7 @@ func (n *Network) reference(components map[string]string) error {
 }
 
 func (n *Network) connect(connections []dsl.Connection) error {
-	n.streams = []Stream{}
+	n.streams = []stream{}
 
 	for _, c := range connections {
 		if target, ok := n.processes[c.Target.Component]; !ok {
@@ -51,7 +56,7 @@ func (n *Network) connect(connections []dsl.Connection) error {
 		} else if input, ok := target.Inputs()[c.Target.Port]; !ok {
 			return fmt.Errorf("input %q on target %q not available", c.Target.Port, c.Target.Component)
 		} else if len(c.Data) > 0 {
-			n.initialIPs = append(n.initialIPs, func() { input.Channel <- c.Data })
+			n.initialIPs = append(n.initialIPs, packet{data: c.Data, target: input.Channel})
 		} else if source, ok := n.processes[c.Source.Component]; !ok {
 			return fmt.Errorf("source %q not registered", c.Source.Component)
 		} else if output, ok := source.Outputs()[c.Source.Port]; !ok {
@@ -59,7 +64,7 @@ func (n *Network) connect(connections []dsl.Connection) error {
 		} else if !process.IsCompatibleIPType(output.IPType, input.IPType) {
 			return fmt.Errorf("unmatched connection type from %v to %v", c.Source, c.Target)
 		} else {
-			n.streams = append(n.streams, Stream{output.Channel, input.Channel})
+			n.streams = append(n.streams, stream{output.Channel, input.Channel})
 		}
 	}
 
@@ -79,7 +84,7 @@ func Create(graph dsl.Graph, out chan<- string) (*Network, error) {
 	}
 }
 
-func (n *Network) Run() error {
+func (n *Network) Run() {
 	for _, s := range n.streams {
 		go func(source <-chan any, target chan<- any) {
 			for value := range source {
@@ -88,9 +93,9 @@ func (n *Network) Run() error {
 		}(s.source, s.target)
 	}
 
-	for _, i := range n.initialIPs {
-		go func(init func()) { init() }(i)
+	for _, p := range n.initialIPs {
+		go func(data string, target chan<- any) {
+			target <- data
+		}(p.data, p.target)
 	}
-
-	return nil
 }

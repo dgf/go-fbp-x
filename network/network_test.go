@@ -31,8 +31,8 @@ func TestRun(t *testing.T) {
 				t.Errorf("Parse failed: %v", err)
 			} else if network, err := network.Create(graph, out); err != nil {
 				t.Errorf("Create failed: %v", err)
-			} else if err := network.Run(); err != nil {
-				t.Errorf("Run failed: %v", err)
+			} else {
+				network.Run()
 			}
 
 			select {
