@@ -3,13 +3,13 @@
 // current limitation:
 // - component meta data is ignored
 // - annotations are removed before processing
-// - not supports port index
 package dsl
 
 import (
 	"fmt"
 	"io"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -17,6 +17,7 @@ var (
 	commentMatch    = regexp.MustCompile("(?m)#.*$")
 	connectionSplit = regexp.MustCompile("->")
 	spacesMatch     = regexp.MustCompile("[\t\f\r ]+")
+	indexPortMatch  = regexp.MustCompile(`(\w+)\[(\d+)\]`)
 )
 
 func parseDefinition(part string) (in, component, process, out string, err error) {
@@ -56,6 +57,17 @@ func parse(pos int, part string) (in, component, process, out string, err error)
 	}
 }
 
+func link(component, port string) Link {
+	portName := port
+	index := 0
+	if indexPortMatch.Match([]byte(port)) {
+		portAndIndex := indexPortMatch.FindStringSubmatch(port)
+		portName = portAndIndex[1]
+		index, _ = strconv.Atoi(portAndIndex[2]) // hint: number matched by regexp
+	}
+	return Link{Component: component, Port: strings.ToLower(portName), Index: index}
+}
+
 func Parse(src io.Reader) (Graph, error) {
 	graph := Graph{
 		Components: map[string]string{},
@@ -84,15 +96,13 @@ func Parse(src io.Reader) (Graph, error) {
 					}
 
 					if len(connection.Data) > 0 || len(connection.Source.Component) > 0 {
-						connection.Target.Component = component
-						connection.Target.Port = strings.ToLower(in) // TODO handle index
+						connection.Target = link(component, in)
 						graph.Connections = append(graph.Connections, connection)
 						connection = Connection{}
 					}
 
 					if len(out) > 0 {
-						connection.Source.Component = component
-						connection.Source.Port = strings.ToLower(out)
+						connection.Source = link(component, out)
 					}
 				}
 			}

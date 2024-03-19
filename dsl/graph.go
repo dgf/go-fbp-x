@@ -3,6 +3,7 @@ package dsl
 import (
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"golang.org/x/exp/maps"
@@ -11,7 +12,7 @@ import (
 type Link struct {
 	Component string
 	Port      string
-	// Index     int
+	Index     int
 }
 
 type Connection struct {
@@ -23,6 +24,17 @@ type Connection struct {
 type Graph struct {
 	Components  map[string]string
 	Connections []Connection
+}
+
+func portLabel(l Link) string {
+	sb := strings.Builder{}
+	sb.WriteString(l.Port)
+	if l.Index > 0 {
+		sb.WriteString("[")
+		sb.WriteString(strconv.Itoa(l.Index))
+		sb.WriteString("]")
+	}
+	return sb.String()
 }
 
 func (g Graph) String() string {
@@ -37,10 +49,11 @@ func (g Graph) String() string {
 
 	sb.WriteString("\nconnections:\n")
 	for _, c := range g.Connections {
+		t := c.Target
 		if len(c.Data) > 0 {
-			sb.WriteString(fmt.Sprintf("%s > %s %s\n", c.Data, c.Target.Port, c.Target.Component))
+			sb.WriteString(fmt.Sprintf("%s > %s %s\n", c.Data, portLabel(t), t.Component))
 		} else {
-			sb.WriteString(fmt.Sprintf("%s %s > %s %s\n", c.Source.Component, c.Source.Port, c.Target.Port, c.Target.Component))
+			sb.WriteString(fmt.Sprintf("%s %s > %s %s\n", c.Source.Component, portLabel(c.Source), portLabel(t), t.Component))
 		}
 	}
 
