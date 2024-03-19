@@ -11,6 +11,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/dgf/go-fbp-x/network"
 )
 
 var (
@@ -57,7 +59,7 @@ func parse(pos int, part string) (in, component, process, out string, err error)
 	}
 }
 
-func link(component, port string) Link {
+func link(component, port string) network.Link {
 	portName := port
 	index := 0
 	if indexPortMatch.Match([]byte(port)) {
@@ -65,11 +67,11 @@ func link(component, port string) Link {
 		portName = portAndIndex[1]
 		index, _ = strconv.Atoi(portAndIndex[2]) // hint: number matched by regexp
 	}
-	return Link{Component: component, Port: strings.ToLower(portName), Index: index}
+	return network.Link{Component: component, Port: strings.ToLower(portName), Index: index}
 }
 
-func Parse(src io.Reader) (Graph, error) {
-	graph := Graph{
+func Parse(src io.Reader) (network.Graph, error) {
+	graph := network.Graph{
 		Components: map[string]string{},
 	}
 
@@ -81,14 +83,14 @@ func Parse(src io.Reader) (Graph, error) {
 	withoutComments := commentMatch.ReplaceAll(allBytes, []byte(""))
 	joinedSpaces := spacesMatch.ReplaceAll(withoutComments, []byte(" "))
 	for _, line := range strings.Split(string(joinedSpaces), "\n") {
-		connection := Connection{}
+		connection := network.Connection{}
 		for p, part := range connectionSplit.Split(line, -1) {
 			trimmed := strings.TrimSpace(part)
 			if len(trimmed) > 1 { // skip empty lines
 				if strings.HasPrefix(trimmed, "'") { // data input
 					connection.Data = strings.Trim(trimmed, "'")
 				} else if in, component, process, out, err := parse(p, trimmed); err != nil {
-					return Graph{}, err
+					return network.Graph{}, err
 				} else {
 
 					if len(process) > 0 {
@@ -98,7 +100,7 @@ func Parse(src io.Reader) (Graph, error) {
 					if len(connection.Data) > 0 || len(connection.Source.Component) > 0 {
 						connection.Target = link(component, in)
 						graph.Connections = append(graph.Connections, connection)
-						connection = Connection{}
+						connection = network.Connection{}
 					}
 
 					if len(out) > 0 {

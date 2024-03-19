@@ -5,8 +5,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-
-	"github.com/dgf/go-fbp-x/network"
 )
 
 func main() {
@@ -15,6 +13,6 @@ func main() {
 	} else {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-		network.Run(os.Args[1], sigs)
+		Run(os.Args[1], sigs)
 	}
 }

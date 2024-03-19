@@ -1,6 +1,7 @@
 package network_test
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -32,6 +33,7 @@ func TestRun(t *testing.T) {
 			if graph, err := dsl.Parse(strings.NewReader(tc.fbp)); err != nil {
 				t.Errorf("Parse failed: %v", err)
 			} else if network, err := network.Create(graph, out); err != nil {
+				fmt.Println(graph.String())
 				t.Errorf("Create failed: %v", err)
 			} else {
 				network.Run()

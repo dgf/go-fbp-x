@@ -1,4 +1,4 @@
-package network
+package main
 
 import (
 	"log"
@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/dgf/go-fbp-x/dsl"
+	"github.com/dgf/go-fbp-x/network"
 )
 
 func Run(path string, sigs <-chan os.Signal) {
@@ -16,7 +17,7 @@ func Run(path string, sigs <-chan os.Signal) {
 		log.Fatalf("Load failed: %v", err)
 	} else if g, err := dsl.Parse(f); err != nil {
 		log.Fatalf("Parse failed: %v", err)
-	} else if n, err := Create(g, out); err != nil {
+	} else if n, err := network.Create(g, out); err != nil {
 		log.Fatalf("Create failed: %v", err)
 	} else {
 		n.Run()

@@ -3,7 +3,6 @@ package network
 import (
 	"fmt"
 
-	"github.com/dgf/go-fbp-x/dsl"
 	"github.com/dgf/go-fbp-x/process"
 )
 
@@ -47,7 +46,7 @@ func (n *Network) reference(components map[string]string) error {
 	return nil
 }
 
-func (n *Network) connect(connections []dsl.Connection) error {
+func (n *Network) connect(connections []Connection) error {
 	n.streams = []stream{}
 
 	for _, c := range connections {
@@ -71,7 +70,7 @@ func (n *Network) connect(connections []dsl.Connection) error {
 	return nil
 }
 
-func Create(graph dsl.Graph, out chan<- string) (*Network, error) {
+func Create(graph Graph, out chan<- string) (*Network, error) {
 	network := &Network{}
 	network.init(out)
 

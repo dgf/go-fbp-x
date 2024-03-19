@@ -6,20 +6,21 @@ import (
 	"testing"
 
 	"github.com/dgf/go-fbp-x/dsl"
+	"github.com/dgf/go-fbp-x/network"
 )
 
-func DataTarget(data, port, component string) dsl.Connection {
-	return dsl.Connection{Data: data, Target: dsl.Link{Port: port, Component: component}}
+func DataTarget(data, port, component string) network.Connection {
+	return network.Connection{Data: data, Target: network.Link{Port: port, Component: component}}
 }
 
-func SourceTargetIndex(sComp, sPort string, sIndex, tIndex int, tPort, tComp string) dsl.Connection {
-	return dsl.Connection{
-		Source: dsl.Link{Port: sPort, Index: sIndex, Component: sComp},
-		Target: dsl.Link{Port: tPort, Index: tIndex, Component: tComp},
+func SourceTargetIndex(sComp, sPort string, sIndex, tIndex int, tPort, tComp string) network.Connection {
+	return network.Connection{
+		Source: network.Link{Port: sPort, Index: sIndex, Component: sComp},
+		Target: network.Link{Port: tPort, Index: tIndex, Component: tComp},
 	}
 }
 
-func SourceTarget(sComp, sPort, tPort, tComp string) dsl.Connection {
+func SourceTarget(sComp, sPort, tPort, tComp string) network.Connection {
 	return SourceTargetIndex(sComp, sPort, 0, 0, tPort, tComp)
 }
 
@@ -27,35 +28,35 @@ func TestParse(t *testing.T) {
 	for _, tc := range []struct {
 		name  string
 		fbp   string
-		graph dsl.Graph
+		graph network.Graph
 	}{
-		{"empty", "", dsl.Graph{}},
-		{"one comment", "# comment", dsl.Graph{}},
-		{"one component", "in call", dsl.Graph{}},
-		{"one data element", "'data'", dsl.Graph{}},
-		{"one data input", "'data' -> in component(process)", dsl.Graph{
+		{"empty", "", network.Graph{}},
+		{"one comment", "# comment", network.Graph{}},
+		{"one component", "in call", network.Graph{}},
+		{"one data element", "'data'", network.Graph{}},
+		{"one data input", "'data' -> in component(process)", network.Graph{
 			Components:  map[string]string{"component": "process"},
-			Connections: []dsl.Connection{DataTarget("data", "in", "component")},
+			Connections: []network.Connection{DataTarget("data", "in", "component")},
 		}},
-		{"two connections triple", "'data' -> in one(do) out -> in two(do)", dsl.Graph{
+		{"two connections triple", "'data' -> in one(do) out -> in two(do)", network.Graph{
 			Components:  map[string]string{"one": "do", "two": "do"},
-			Connections: []dsl.Connection{DataTarget("data", "in", "one"), SourceTarget("one", "out", "in", "two")},
+			Connections: []network.Connection{DataTarget("data", "in", "one"), SourceTarget("one", "out", "in", "two")},
 		}},
-		{"two connections separated", "'data' -> in one(do)\none out -> in two(do)", dsl.Graph{
+		{"two connections separated", "'data' -> in one(do)\none out -> in two(do)", network.Graph{
 			Components:  map[string]string{"one": "do", "two": "do"},
-			Connections: []dsl.Connection{DataTarget("data", "in", "one"), SourceTarget("one", "out", "in", "two")},
+			Connections: []network.Connection{DataTarget("data", "in", "one"), SourceTarget("one", "out", "in", "two")},
 		}},
-		{"split output", "one(do) out -> in two(do)\none out -> in three(do)", dsl.Graph{
+		{"split output", "one(do) out -> in two(do)\none out -> in three(do)", network.Graph{
 			Components:  map[string]string{"one": "do", "two": "do", "three": "do"},
-			Connections: []dsl.Connection{SourceTarget("one", "out", "in", "two"), SourceTarget("one", "out", "in", "three")},
+			Connections: []network.Connection{SourceTarget("one", "out", "in", "two"), SourceTarget("one", "out", "in", "three")},
 		}},
-		{"join input", "one(do) out -> in three(do)\ntwo(do) out -> in three", dsl.Graph{
+		{"join input", "one(do) out -> in three(do)\ntwo(do) out -> in three", network.Graph{
 			Components:  map[string]string{"one": "do", "two": "do", "three": "do"},
-			Connections: []dsl.Connection{SourceTarget("one", "out", "in", "three"), SourceTarget("two", "out", "in", "three")},
+			Connections: []network.Connection{SourceTarget("one", "out", "in", "three"), SourceTarget("two", "out", "in", "three")},
 		}},
-		{"index in and out", "one(do) out[1] -> in[1] three(do)\ntwo(do) out[1] -> in[2] three", dsl.Graph{
+		{"index in and out", "one(do) out[1] -> in[1] three(do)\ntwo(do) out[1] -> in[2] three", network.Graph{
 			Components: map[string]string{"one": "do", "two": "do", "three": "do"},
-			Connections: []dsl.Connection{
+			Connections: []network.Connection{
 				SourceTargetIndex("one", "out", 1, 1, "in", "three"),
 				SourceTargetIndex("two", "out", 1, 2, "in", "three"),
 			},
