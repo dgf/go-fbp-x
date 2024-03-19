@@ -37,6 +37,15 @@ func portLabel(l Link) string {
 	return sb.String()
 }
 
+func (c Connection) String() string {
+	target := c.Target
+	if len(c.Data) > 0 {
+		return fmt.Sprintf("%s > %s %s", c.Data, portLabel(target), target.Component)
+	} else {
+		return fmt.Sprintf("%s %s > %s %s", c.Source.Component, portLabel(c.Source), portLabel(target), target.Component)
+	}
+}
+
 func (g Graph) String() string {
 	sb := strings.Builder{}
 
@@ -49,12 +58,8 @@ func (g Graph) String() string {
 
 	sb.WriteString("\nconnections:\n")
 	for _, c := range g.Connections {
-		t := c.Target
-		if len(c.Data) > 0 {
-			sb.WriteString(fmt.Sprintf("%s > %s %s\n", c.Data, portLabel(t), t.Component))
-		} else {
-			sb.WriteString(fmt.Sprintf("%s %s > %s %s\n", c.Source.Component, portLabel(c.Source), portLabel(t), t.Component))
-		}
+		sb.WriteString(c.String())
+		sb.WriteString("\n")
 	}
 
 	return sb.String()

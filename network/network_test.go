@@ -1,7 +1,6 @@
 package network_test
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -28,31 +27,37 @@ func TestRun(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			out := make(chan string, 1)
-			act := make(chan []string, 1)
+			done := make(chan []string, 1)
+			traces := make(chan network.Trace, 1)
 
 			if graph, err := dsl.Parse(strings.NewReader(tc.fbp)); err != nil {
 				t.Errorf("Parse failed: %v", err)
 			} else if network, err := network.Create(graph, out); err != nil {
-				fmt.Println(graph.String())
 				t.Errorf("Create failed: %v", err)
 			} else {
-				network.Run()
+				network.Run(traces)
 			}
 
 			go func() {
-				a := make([]string, len(tc.out))
-				for i := range len(tc.out) {
-					a[i] = <-out
+				for range traces {
+					// discard
 				}
-				act <- a
+			}()
+
+			go func() {
+				act := make([]string, len(tc.out))
+				for i := range len(tc.out) {
+					act[i] = <-out
+				}
+				done <- act
 			}()
 
 			select {
 			case <-time.After(37 * time.Millisecond):
 				t.Error("Timeout Run")
-			case a := <-act:
-				if !reflect.DeepEqual(a, tc.out) {
-					t.Errorf("Run failed got: %q, want: %q", a, tc.out)
+			case act := <-done:
+				if !reflect.DeepEqual(act, tc.out) {
+					t.Errorf("Run failed got: %q, want: %q", act, tc.out)
 				}
 			}
 		})

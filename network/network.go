@@ -9,11 +9,13 @@ import (
 type packet struct {
 	target chan<- any
 	data   string
+	Connection
 }
 
 type stream struct {
 	source <-chan any
 	target chan<- any
+	Connection
 }
 
 type Network struct {
@@ -55,7 +57,7 @@ func (n *Network) connect(connections []Connection) error {
 		} else if input, ok := target.Inputs()[c.Target.Port]; !ok {
 			return fmt.Errorf("input %q on target %q not available", c.Target.Port, c.Target.Component)
 		} else if len(c.Data) > 0 {
-			n.initialIPs = append(n.initialIPs, packet{data: c.Data, target: input.Channel})
+			n.initialIPs = append(n.initialIPs, packet{input.Channel, c.Data, c})
 		} else if source, ok := n.processes[c.Source.Component]; !ok {
 			return fmt.Errorf("source %q not registered", c.Source.Component)
 		} else if output, ok := source.Outputs()[c.Source.Port]; !ok {
@@ -63,7 +65,7 @@ func (n *Network) connect(connections []Connection) error {
 		} else if !process.IsCompatibleIPType(output.IPType, input.IPType) {
 			return fmt.Errorf("unmatched connection type from %v to %v", c.Source, c.Target)
 		} else {
-			n.streams = append(n.streams, stream{output.Channel, input.Channel})
+			n.streams = append(n.streams, stream{output.Channel, input.Channel, c})
 		}
 	}
 
@@ -83,18 +85,20 @@ func Create(graph Graph, out chan<- string) (*Network, error) {
 	}
 }
 
-func (n *Network) Run() {
+func (n *Network) Run(traces chan<- Trace) {
 	for _, s := range n.streams {
-		go func(source <-chan any, target chan<- any) {
+		go func(connection Connection, source <-chan any, target chan<- any) {
 			for value := range source {
+				traces <- Trace{value, connection}
 				target <- value
 			}
-		}(s.source, s.target)
+		}(s.Connection, s.source, s.target)
 	}
 
 	for _, p := range n.initialIPs {
-		go func(data string, target chan<- any) {
+		go func(connection Connection, data string, target chan<- any) {
+			traces <- Trace{data, connection}
 			target <- data
-		}(p.data, p.target)
+		}(p.Connection, p.data, p.target)
 	}
 }
