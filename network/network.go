@@ -12,23 +12,28 @@ type packet struct {
 	Connection
 }
 
-type stream struct {
-	source <-chan any
-	target chan<- any
-	Connection
+type targetChannel struct {
+	channel chan<- any
+	Link
+}
+
+type demux struct {
+	source  <-chan any
+	targets []targetChannel
 }
 
 type Network struct {
 	factory    map[string]func() process.Process
 	processes  map[string]process.Process
+	demuxes    map[Link]*demux
 	initialIPs []packet
-	streams    []stream
 }
 
 func (n *Network) init(out chan<- string) {
 	n.factory = map[string]func() process.Process{}
 
-	n.factory["Counter"] = func() process.Process { return process.Counter() }
+	n.factory["Clone"] = func() process.Process { return process.Clone() }
+	n.factory["Count"] = func() process.Process { return process.Count() }
 	n.factory["OutputText"] = func() process.Process { return process.OutputText(out) }
 	n.factory["ReadFile"] = func() process.Process { return process.ReadFile() }
 	n.factory["SplitLines"] = func() process.Process { return process.SplitLines() }
@@ -49,7 +54,7 @@ func (n *Network) reference(components map[string]string) error {
 }
 
 func (n *Network) connect(connections []Connection) error {
-	n.streams = []stream{}
+	n.demuxes = map[Link]*demux{}
 
 	for _, c := range connections {
 		if target, ok := n.processes[c.Target.Component]; !ok {
@@ -64,8 +69,10 @@ func (n *Network) connect(connections []Connection) error {
 			return fmt.Errorf("output %q on source %q not available", c.Source.Port, c.Source.Component)
 		} else if !process.IsCompatibleIPType(output.IPType, input.IPType) {
 			return fmt.Errorf("unmatched connection type from %v to %v", c.Source, c.Target)
+		} else if d, ok := n.demuxes[c.Source]; ok {
+			d.targets = append(d.targets, targetChannel{input.Channel, c.Target})
 		} else {
-			n.streams = append(n.streams, stream{output.Channel, input.Channel, c})
+			n.demuxes[c.Source] = &demux{output.Channel, []targetChannel{{input.Channel, c.Target}}}
 		}
 	}
 
@@ -86,13 +93,15 @@ func Create(graph Graph, out chan<- string) (*Network, error) {
 }
 
 func (n *Network) Run(traces chan<- Trace) {
-	for _, s := range n.streams {
-		go func(connection Connection, source <-chan any, target chan<- any) {
+	for l, d := range n.demuxes {
+		go func(link Link, source <-chan any, targets []targetChannel) {
 			for value := range source {
-				traces <- Trace{value, connection}
-				target <- value
+				for _, target := range targets {
+					traces <- Trace{value, Connection{Source: link, Target: target.Link}}
+					target.channel <- value
+				}
 			}
-		}(s.Connection, s.source, s.target)
+		}(l, d.source, d.targets)
 	}
 
 	for _, p := range n.initialIPs {

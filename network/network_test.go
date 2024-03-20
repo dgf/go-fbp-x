@@ -2,6 +2,7 @@ package network_test
 
 import (
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -15,13 +16,20 @@ func TestRun(t *testing.T) {
 		name string
 		fbp  string
 		out  []string
+		ord  bool
 	}{
 		{name: "output data input", out: []string{"test"}, fbp: "'test' -> IN Display(OutputText)"},
 		{name: "unknown file", out: []string{"open not-found.txt: no such file or directory"}, fbp: `
                 'not-found.txt' -> IN Read(ReadFile) ERROR -> IN Display(OutputText)`},
-		{name: "count lines of text file", out: []string{"1", "2", "3"}, fbp: `
+		{name: "slurp multi inputs", out: []string{"one", "two"}, fbp: `
+                'one' -> IN Display(OutputText)
+                'two' -> IN Display`},
+		{name: "demux output", out: []string{"one", "one"}, fbp: `
+                'one' -> IN Demux(Clone) OUT -> IN Display1(OutputText)
+                Demux OUT -> IN Display2(OutputText)`},
+		{name: "count lines of text file", out: []string{"1", "2", "3"}, ord: true, fbp: `
                 'testdata/three-lines.txt' -> IN Read(ReadFile)
-                Read OUT -> IN Split(SplitLines) OUT -> IN Count(Counter)
+                Read OUT -> IN Split(SplitLines) OUT -> IN Count(Count)
                 Count OUT -> IN Display(OutputText)
                 Read ERROR -> IN Display`},
 	} {
@@ -54,8 +62,12 @@ func TestRun(t *testing.T) {
 
 			select {
 			case <-time.After(37 * time.Millisecond):
-				t.Error("Timeout Run")
+				t.Error("Timeout! Deadlock?")
 			case act := <-done:
+				if !tc.ord {
+					slices.Sort(act)
+					slices.Sort(tc.out)
+				}
 				if !reflect.DeepEqual(act, tc.out) {
 					t.Errorf("Run failed got: %q, want: %q", act, tc.out)
 				}

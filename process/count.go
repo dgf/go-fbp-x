@@ -1,11 +1,11 @@
 package process
 
-type counter struct {
+type count struct {
 	ins  map[string]Input
 	outs map[string]Output
 }
 
-func Counter() Process {
+func Count() Process {
 	in := make(chan any, 1)
 	out := make(chan any, 1)
 	count := 0
@@ -23,10 +23,10 @@ func Counter() Process {
 	}
 }
 
-func (sl *counter) Inputs() map[string]Input {
-	return sl.ins
+func (c *count) Inputs() map[string]Input {
+	return c.ins
 }
 
-func (sl *counter) Outputs() map[string]Output {
-	return sl.outs
+func (c *count) Outputs() map[string]Output {
+	return c.outs
 }
