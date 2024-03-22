@@ -19,6 +19,7 @@ type Output struct {
 }
 
 type Process interface {
+	Description() string
 	Inputs() map[string]Input
 	Outputs() map[string]Output
 }

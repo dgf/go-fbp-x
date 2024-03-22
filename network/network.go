@@ -4,6 +4,9 @@ import (
 	"fmt"
 
 	"github.com/dgf/go-fbp-x/process"
+	"github.com/dgf/go-fbp-x/process/core"
+	"github.com/dgf/go-fbp-x/process/filesystem"
+	"github.com/dgf/go-fbp-x/process/text"
 )
 
 type packet struct {
@@ -32,11 +35,11 @@ type Network struct {
 func (n *Network) init(out chan<- string) {
 	n.factory = map[string]func() process.Process{}
 
-	n.factory["Clone"] = func() process.Process { return process.Clone() }
-	n.factory["Count"] = func() process.Process { return process.Count() }
-	n.factory["OutputText"] = func() process.Process { return process.OutputText(out) }
-	n.factory["ReadFile"] = func() process.Process { return process.ReadFile() }
-	n.factory["SplitLines"] = func() process.Process { return process.SplitLines() }
+	n.factory["core/Clone"] = func() process.Process { return core.Clone() }
+	n.factory["core/Count"] = func() process.Process { return core.Count() }
+	n.factory["core/Output"] = func() process.Process { return core.Output(out) }
+	n.factory["fs/ReadFile"] = func() process.Process { return filesystem.ReadFile() }
+	n.factory["text/Split"] = func() process.Process { return text.Split() }
 }
 
 func (n *Network) reference(components map[string]string) error {

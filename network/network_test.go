@@ -18,20 +18,24 @@ func TestRun(t *testing.T) {
 		out  []string
 		ord  bool
 	}{
-		{name: "output data input", out: []string{"test"}, fbp: "'test' -> IN Display(OutputText)"},
+		{name: "output data input", out: []string{"test"}, fbp: "'test' -> IN Display(core/Output)"},
 		{name: "unknown file", out: []string{"open not-found.txt: no such file or directory"}, fbp: `
-                'not-found.txt' -> IN Read(ReadFile) ERROR -> IN Display(OutputText)`},
+                'not-found.txt' -> IN Read(fs/ReadFile) ERR -> IN Display(core/Output)`},
 		{name: "slurp multi inputs", out: []string{"one", "two"}, fbp: `
-                'one' -> IN Display(OutputText)
+                'one' -> IN Display(core/Output)
                 'two' -> IN Display`},
 		{name: "demux output", out: []string{"one", "one"}, fbp: `
-                'one' -> IN Demux(Clone) OUT -> IN Display1(OutputText)
-                Demux OUT -> IN Display2(OutputText)`},
+                'one' -> IN Demux(core/Clone) OUT -> IN Display1(core/Output)
+                Demux OUT -> IN Display2(core/Output)`},
+		{name: "split string", out: []string{"one", "two"}, ord: true, fbp: `
+                '|' -> SEP Split(text/Split)
+                'one|two' -> IN Split OUT -> IN Display(core/Output)`},
 		{name: "count lines of text file", out: []string{"1", "2", "3"}, ord: true, fbp: `
-                'testdata/three-lines.txt' -> IN Read(ReadFile)
-                Read OUT -> IN Split(SplitLines) OUT -> IN Count(Count)
-                Count OUT -> IN Display(OutputText)
-                Read ERROR -> IN Display`},
+		            '\n' -> SEP Split(text/Split)
+		            'testdata/three-lines.txt' -> IN Read(fs/ReadFile)
+		            Read OUT -> IN Split OUT -> IN Count(core/Count)
+		            Count OUT -> IN Display(core/Output)
+		            Read ERR -> IN Display`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			out := make(chan string, 1)
