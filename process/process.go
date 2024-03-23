@@ -27,3 +27,15 @@ type Process interface {
 func IsCompatibleIPType(source IPType, target IPType) bool {
 	return source == target || target == AnyIP
 }
+
+func (ipt IPType) String() string {
+	switch ipt {
+	case AnyIP:
+		return "any"
+	case NumberIP:
+		return "number"
+	case StringIP:
+		return "string"
+	}
+	return "unknown"
+}

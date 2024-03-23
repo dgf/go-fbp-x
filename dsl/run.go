@@ -8,24 +8,24 @@ import (
 	"github.com/dgf/go-fbp-x/network"
 )
 
-func Run(path string, sigs <-chan os.Signal) {
+func Run(path string, trace bool, exit <-chan bool) {
 	out := make(chan string, 1)
-	exit := make(chan bool, 1)
+	done := make(chan bool, 1)
 	traces := make(chan network.Trace, 1)
 
 	if f, err := os.Open(path); err != nil {
 		log.Fatalf("Load failed: %v", err)
 	} else if g, err := Parse(f); err != nil {
 		log.Fatalf("Parse failed: %v", err)
-	} else if n, err := network.Create(g, out); err != nil {
-		log.Fatalf("Create failed: %v", err)
-	} else {
-		n.Run(traces)
+	} else if err := network.NewNetwork(out).Run(g, traces); err != nil {
+		log.Fatalf("Run failed: %v", err)
 	}
 
 	go func() {
 		for t := range traces {
-			slog.Info("trace", "packet", t.Packet, "connection", t.Connection)
+			if trace {
+				slog.Info("trace", "packet", t.Packet, "connection", t.Connection)
+			}
 		}
 	}()
 
@@ -34,11 +34,11 @@ func Run(path string, sigs <-chan os.Signal) {
 			select {
 			case o := <-out:
 				slog.Info("output", "text", o)
-			case <-sigs:
-				exit <- true
+			case <-exit:
+				done <- true
 			}
 		}
 	}()
 
-	<-exit
+	<-done
 }

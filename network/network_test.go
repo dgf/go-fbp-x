@@ -46,11 +46,9 @@ func TestRun(t *testing.T) {
 			if graph, err := dsl.Parse(strings.NewReader(tc.fbp)); err != nil {
 				t.Errorf("Parse failed: %v", err)
 				return
-			} else if network, err := network.Create(graph, out); err != nil {
-				t.Errorf("Create failed: %v", err)
+			} else if err := network.NewNetwork(out).Run(graph, traces); err != nil {
+				t.Errorf("Run failed: %v", err)
 				return
-			} else {
-				network.Run(traces)
 			}
 
 			go func() {

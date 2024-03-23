@@ -4,10 +4,12 @@ import (
 	"fmt"
 
 	"github.com/dgf/go-fbp-x/process"
-	"github.com/dgf/go-fbp-x/process/core"
-	"github.com/dgf/go-fbp-x/process/filesystem"
-	"github.com/dgf/go-fbp-x/process/text"
 )
+
+type Network interface {
+	Processes() map[string]process.Process
+	Run(graph Graph, traces chan<- Trace) error
+}
 
 type packet struct {
 	target chan<- any
@@ -25,39 +27,32 @@ type demux struct {
 	targets []targetChannel
 }
 
-type Network struct {
-	factory    map[string]func() process.Process
+type net struct {
+	factory    Factory
 	processes  map[string]process.Process
 	demuxes    map[Link]*demux
 	initialIPs []packet
 }
 
-func (n *Network) init(out chan<- string) {
-	n.factory = map[string]func() process.Process{}
-
-	n.factory["core/Clone"] = func() process.Process { return core.Clone() }
-	n.factory["core/Count"] = func() process.Process { return core.Count() }
-	n.factory["core/Output"] = func() process.Process { return core.Output(out) }
-	n.factory["fs/ReadFile"] = func() process.Process { return filesystem.ReadFile() }
-	n.factory["text/Append"] = func() process.Process { return text.Append() }
-	n.factory["text/Split"] = func() process.Process { return text.Split() }
+func NewNetwork(out chan<- string) Network {
+	return &net{factory: NewFactory(out)}
 }
 
-func (n *Network) reference(components map[string]string) error {
+func (n *net) reference(components map[string]string) error {
 	n.processes = map[string]process.Process{}
 
 	for component, process := range components {
-		if factory, ok := n.factory[process]; !ok {
+		if pf, ok := n.factory.Create(process); !ok {
 			return fmt.Errorf("process %q not available", process)
 		} else {
-			n.processes[component] = factory()
+			n.processes[component] = pf
 		}
 	}
 
 	return nil
 }
 
-func (n *Network) connect(connections []Connection) error {
+func (n *net) connect(connections []Connection) error {
 	n.demuxes = map[Link]*demux{}
 
 	for _, c := range connections {
@@ -83,20 +78,19 @@ func (n *Network) connect(connections []Connection) error {
 	return nil
 }
 
-func Create(graph Graph, out chan<- string) (*Network, error) {
-	network := &Network{}
-	network.init(out)
+func (n *net) Processes() map[string]process.Process {
+	procs := map[string]process.Process{}
 
-	if err := network.reference(graph.Components); err != nil {
-		return network, err
-	} else if err := network.connect(graph.Connections); err != nil {
-		return network, err
-	} else {
-		return network, nil
-	}
+	return procs
 }
 
-func (n *Network) Run(traces chan<- Trace) {
+func (n *net) Run(graph Graph, traces chan<- Trace) error {
+	if err := n.reference(graph.Components); err != nil {
+		return err
+	} else if err := n.connect(graph.Connections); err != nil {
+		return err
+	}
+
 	for l, d := range n.demuxes {
 		go func(link Link, source <-chan any, targets []targetChannel) {
 			for value := range source {
@@ -114,4 +108,6 @@ func (n *Network) Run(traces chan<- Trace) {
 			target <- data
 		}(p.Connection, p.data, p.target)
 	}
+
+	return nil
 }
