@@ -30,12 +30,13 @@ func TestRun(t *testing.T) {
 		{name: "split string", out: []string{"one", "two"}, ord: true, fbp: `
                 '|' -> SEP Split(text/Split)
                 'one|two' -> IN Split OUT -> IN Display(core/Output)`},
-		{name: "count lines of text file", out: []string{"1", "2", "3"}, ord: true, fbp: `
-		            '\n' -> SEP Split(text/Split)
-		            'testdata/three-lines.txt' -> IN Read(fs/ReadFile)
-		            Read OUT -> IN Split OUT -> IN Count(core/Count)
-		            Count OUT -> IN Display(core/Output)
-		            Read ERR -> IN Display`},
+		{name: "count lines of text file", out: []string{"1one", "2two", "3three"}, ord: true, fbp: `
+                '\n' -> SEP Split(text/Split)
+                'testdata/three-lines.txt' -> IN Read(fs/ReadFile)
+                Read OUT -> IN Split OUT -> IN Count(core/Count)
+                Count OUT -> IN Append(text/Append) OUT -> IN Display(core/Output)
+                Split OUT -> AFFIX Append
+                Read ERR -> IN Display`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			out := make(chan string, 1)
@@ -44,8 +45,10 @@ func TestRun(t *testing.T) {
 
 			if graph, err := dsl.Parse(strings.NewReader(tc.fbp)); err != nil {
 				t.Errorf("Parse failed: %v", err)
+				return
 			} else if network, err := network.Create(graph, out); err != nil {
 				t.Errorf("Create failed: %v", err)
+				return
 			} else {
 				network.Run(traces)
 			}

@@ -39,6 +39,7 @@ func (n *Network) init(out chan<- string) {
 	n.factory["core/Count"] = func() process.Process { return core.Count() }
 	n.factory["core/Output"] = func() process.Process { return core.Output(out) }
 	n.factory["fs/ReadFile"] = func() process.Process { return filesystem.ReadFile() }
+	n.factory["text/Append"] = func() process.Process { return text.Append() }
 	n.factory["text/Split"] = func() process.Process { return text.Split() }
 }
 
