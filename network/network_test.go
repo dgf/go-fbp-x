@@ -30,12 +30,13 @@ func TestRun(t *testing.T) {
 		{name: "split string", out: []string{"one", "two"}, ord: true, fbp: `
                 '|' -> SEP Split(text/Split)
                 'one|two' -> IN Split OUT -> IN Display(core/Output)`},
-		{name: "count lines of text file", out: []string{"1one", "2two", "3three"}, ord: true, fbp: `
+		{name: "count lines of text file", out: []string{"1 one", "2 two", "3 three"}, ord: true, fbp: `
                 '\n' -> SEP Split(text/Split)
+                ' ' -> DATA Space(core/Kick)
                 'testdata/three-lines.txt' -> IN Read(fs/ReadFile)
-                Read OUT -> IN Split OUT -> IN Count(core/Count)
-                Count OUT -> IN Append(text/Append) OUT -> IN Display(core/Output)
-                Split OUT -> AFFIX Append
+                Read OUT -> IN Split OUT -> IN Count(core/Count) OUT -> IN CountAndSpace(text/Append)
+                Count OUT -> IN Space OUT -> AFFIX CountAndSpace OUT -> IN CountAndLine(text/Append)
+                Split OUT -> AFFIX CountAndLine OUT -> IN Display(core/Output)
                 Read ERR -> IN Display`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

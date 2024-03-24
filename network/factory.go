@@ -25,6 +25,7 @@ func NewFactory(out chan<- string) Factory {
 
 	p["core/Clone"] = func() process.Process { return core.Clone() }
 	p["core/Count"] = func() process.Process { return core.Count() }
+	p["core/Kick"] = func() process.Process { return core.Kick() }
 	p["core/Output"] = func() process.Process { return core.Output(out) }
 	p["fs/ReadFile"] = func() process.Process { return filesystem.ReadFile() }
 	p["text/Append"] = func() process.Process { return text.Append() }
