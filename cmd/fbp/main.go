@@ -11,6 +11,12 @@ import (
 	"github.com/dgf/go-fbp-x/network"
 )
 
+var (
+	Name        = "fbp"
+	Version     = "development"
+	Description = "Flow Based Programming Executor"
+)
+
 type Context struct{}
 
 type ProcsCmd struct{}
@@ -45,6 +51,14 @@ var cmd struct {
 }
 
 func main() {
-	ctx := kong.Parse(&cmd)
+	ctx := kong.Parse(&cmd,
+		kong.Name(Name),
+		kong.Description(fmt.Sprintf("%s %s", Description, Version)),
+		kong.UsageOnError(),
+		kong.ConfigureHelp(kong.HelpOptions{
+			Compact: true,
+			Summary: false,
+		}),
+	)
 	ctx.FatalIfErrorf(ctx.Run(&Context{}))
 }
