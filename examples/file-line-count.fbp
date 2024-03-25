@@ -1,0 +1,5 @@
+# reads itself and counts lines
+'\n' -> SEP Split(text/Split)
+'examples/file-line-count.fbp' -> IN Read(fs/ReadFile) OUT -> IN Split
+Split OUT -> IN Count(core/Count) OUT -> IN Display(core/Output)
+Read ERR -> IN Display

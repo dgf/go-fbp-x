@@ -1,0 +1,4 @@
+# tries to read an unknown file
+'unknown-file.txt' -> IN Read(fs/ReadFile)
+Read OUT -> IN Display(core/Output)
+Read ERR -> IN Display
