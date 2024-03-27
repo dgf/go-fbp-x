@@ -9,7 +9,24 @@ import (
 
 	"github.com/dgf/go-fbp-x/dsl"
 	"github.com/dgf/go-fbp-x/network"
+	"github.com/dgf/go-fbp-x/process"
+	"github.com/dgf/go-fbp-x/process/core"
+	"github.com/dgf/go-fbp-x/process/filesystem"
+	"github.com/dgf/go-fbp-x/process/text"
 )
+
+func NewTestFactory(out chan<- string) process.Factory {
+	return process.NewFactory(map[string]func() process.Process{
+		"core/Clone":  func() process.Process { return core.Clone() },
+		"core/Count":  func() process.Process { return core.Count() },
+		"core/Kick":   func() process.Process { return core.Kick() },
+		"core/Output": func() process.Process { return core.Output(out) },
+		"core/Tick":   func() process.Process { return core.Tick() },
+		"fs/ReadFile": func() process.Process { return filesystem.ReadFile() },
+		"text/Append": func() process.Process { return text.Append() },
+		"text/Split":  func() process.Process { return text.Split() },
+	})
+}
 
 func TestRun(t *testing.T) {
 	for _, tc := range []struct {
@@ -51,7 +68,7 @@ func TestRun(t *testing.T) {
 			if graph, err := dsl.Parse(strings.NewReader(tc.fbp)); err != nil {
 				t.Errorf("Parse failed: %v", err)
 				return
-			} else if err := network.NewNetwork(out).Run(graph, traces); err != nil {
+			} else if err := network.NewNetwork(NewTestFactory(out)).Run(graph, traces); err != nil {
 				t.Errorf("Run failed: %v", err)
 				return
 			}

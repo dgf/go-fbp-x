@@ -1,10 +1,11 @@
-package dsl
+package cli
 
 import (
 	"log"
 	"log/slog"
 	"os"
 
+	"github.com/dgf/go-fbp-x/dsl"
 	"github.com/dgf/go-fbp-x/network"
 )
 
@@ -15,9 +16,9 @@ func Run(path string, trace bool, exit <-chan bool) {
 
 	if f, err := os.Open(path); err != nil {
 		log.Fatalf("Load failed: %v", err)
-	} else if g, err := Parse(f); err != nil {
+	} else if g, err := dsl.Parse(f); err != nil {
 		log.Fatalf("Parse failed: %v", err)
-	} else if err := network.NewNetwork(out).Run(g, traces); err != nil {
+	} else if err := network.NewNetwork(NewFactory(out)).Run(g, traces); err != nil {
 		log.Fatalf("Run failed: %v", err)
 	}
 

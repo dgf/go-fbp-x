@@ -1,41 +1,26 @@
-package network
+package process
 
 import (
 	"slices"
 	"strings"
 
-	"github.com/dgf/go-fbp-x/process"
-	"github.com/dgf/go-fbp-x/process/core"
-	"github.com/dgf/go-fbp-x/process/filesystem"
-	"github.com/dgf/go-fbp-x/process/text"
 	"golang.org/x/exp/maps"
 )
 
 type Factory interface {
-	Create(name string) (process.Process, bool)
+	Create(name string) (Process, bool)
 	String() string
 }
 
 type factory struct {
-	procs map[string]func() process.Process
+	procs map[string]func() Process
 }
 
-func NewFactory(out chan<- string) Factory {
-	p := map[string]func() process.Process{}
-
-	p["core/Clone"] = func() process.Process { return core.Clone() }
-	p["core/Count"] = func() process.Process { return core.Count() }
-	p["core/Kick"] = func() process.Process { return core.Kick() }
-	p["core/Output"] = func() process.Process { return core.Output(out) }
-	p["core/Tick"] = func() process.Process { return core.Tick() }
-	p["fs/ReadFile"] = func() process.Process { return filesystem.ReadFile() }
-	p["text/Append"] = func() process.Process { return text.Append() }
-	p["text/Split"] = func() process.Process { return text.Split() }
-
-	return &factory{procs: p}
+func NewFactory(procs map[string]func() Process) Factory {
+	return &factory{procs: procs}
 }
 
-func (f *factory) Create(name string) (process.Process, bool) {
+func (f *factory) Create(name string) (Process, bool) {
 	if fn, ok := f.procs[name]; !ok {
 		return nil, false
 	} else {
@@ -43,7 +28,7 @@ func (f *factory) Create(name string) (process.Process, bool) {
 	}
 }
 
-func inputStringers(inputs map[string]process.Input) map[string]string {
+func inputStringers(inputs map[string]Input) map[string]string {
 	s := map[string]string{}
 	for n, i := range inputs {
 		s[n] = i.String()
@@ -51,7 +36,7 @@ func inputStringers(inputs map[string]process.Input) map[string]string {
 	return s
 }
 
-func outputStringers(outputs map[string]process.Output) map[string]string {
+func outputStringers(outputs map[string]Output) map[string]string {
 	s := map[string]string{}
 	for n, o := range outputs {
 		s[n] = o.String()

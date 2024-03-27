@@ -28,14 +28,14 @@ type demux struct {
 }
 
 type net struct {
-	factory    Factory
+	factory    process.Factory
 	processes  map[string]process.Process
 	demuxes    map[Link]*demux
 	initialIPs []packet
 }
 
-func NewNetwork(out chan<- string) Network {
-	return &net{factory: NewFactory(out)}
+func NewNetwork(factory process.Factory) Network {
+	return &net{factory: factory}
 }
 
 func (n *net) reference(components map[string]string) error {

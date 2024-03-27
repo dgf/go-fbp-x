@@ -7,8 +7,7 @@ import (
 	"syscall"
 
 	"github.com/alecthomas/kong"
-	"github.com/dgf/go-fbp-x/dsl"
-	"github.com/dgf/go-fbp-x/network"
+	"github.com/dgf/go-fbp-x/cmd/fbp/cli"
 )
 
 var (
@@ -22,7 +21,7 @@ type Context struct{}
 type ProcsCmd struct{}
 
 func (p *ProcsCmd) Run(ctx *Context) error {
-	fmt.Println(network.NewFactory(make(chan string, 1)))
+	fmt.Println(cli.NewFactory(make(chan string, 1)))
 	return nil
 }
 
@@ -41,7 +40,7 @@ func (r *RunCmd) Run(ctx *Context) error {
 		exit <- true
 	}()
 
-	dsl.Run(r.Path, r.Trace, exit)
+	cli.Run(r.Path, r.Trace, exit)
 	return nil
 }
 
