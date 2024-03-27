@@ -21,7 +21,7 @@ func Output(out chan<- string) process.Process {
 			} else if n, ok := i.(int); ok {
 				out <- strconv.Itoa(n)
 			} else {
-				panic(fmt.Sprintf("Invalid input %q", i))
+				panic(fmt.Sprintf("Invalid text/Output input %q", i))
 			}
 		}
 	}()

@@ -23,23 +23,25 @@ func NewSplit() *split {
 	}
 }
 
+const splitErrPrefix = "Invalid core/Split"
+
 func Split() process.Process {
 	s := NewSplit()
 
 	go func() {
 		if currentSep, err := s.CastAndUnescape(<-s.sep); err != nil { // requires a seperator upfront
-			panic(fmt.Sprintf("Init failed: %v", err))
+			panic(fmt.Sprintf("%s sep input: %v", splitErrPrefix, err))
 		} else {
 			for {
 				select {
 				case lastSep := <-s.sep: // replace seperator
 					currentSep, err = s.CastAndUnescape(lastSep)
 					if err != nil {
-						panic(fmt.Sprintf("Init failed: %v", err))
+						panic(fmt.Sprintf("%s sep input: %v", splitErrPrefix, err))
 					}
 				case i := <-s.in:
 					if is, ok := i.(string); !ok {
-						panic(fmt.Sprintf("Invalid input %q", i))
+						panic(fmt.Sprintf("%s input %q", splitErrPrefix, i))
 					} else {
 						for _, l := range strings.Split(is, currentSep) {
 							s.out <- l

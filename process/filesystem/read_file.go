@@ -25,7 +25,7 @@ func ReadFile() process.Process {
 	go func() {
 		for i := range rf.in {
 			if s, ok := i.(string); !ok {
-				panic(fmt.Sprintf("Invalid input %q", i))
+				panic(fmt.Sprintf("Invalid fs/ReadFile input %q", i))
 			} else if file, err := os.Open(s); err != nil {
 				rf.errs <- err.Error()
 			} else if data, err := io.ReadAll(file); err != nil {

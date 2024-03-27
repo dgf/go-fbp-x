@@ -33,7 +33,7 @@ func Run(path string, trace bool, exit <-chan bool) {
 		for {
 			select {
 			case o := <-out:
-				slog.Info("output", "text", o)
+				slog.Info("output", "packet", o)
 			case <-exit:
 				done <- true
 			}

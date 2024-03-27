@@ -29,7 +29,7 @@ func Append() process.Process {
 }
 
 func (*append) Description() string {
-	return "Appends affix to input and."
+	return "Appends affix to input."
 }
 
 func (a *append) Inputs() map[string]process.Input {
