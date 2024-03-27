@@ -30,6 +30,10 @@ func TestRun(t *testing.T) {
 		{name: "split string", out: []string{"one", "two"}, ord: true, fbp: `
                 '|' -> SEP Split(text/Split)
                 'one|two' -> IN Split OUT -> IN Display(core/Output)`},
+		{name: "count two ticks", out: []string{"1bang", "2bang"}, ord: true, fbp: `
+                '0.001S' -> INTV Ticker(core/Tick)
+                'bang' -> DATA Ticker OUT -> IN Count(core/Count) OUT -> IN Append(text/Append)
+                Ticker OUT -> AFFIX Append OUT -> IN Display(core/Output)`},
 		{name: "count lines of text file", out: []string{"1 one", "2 two", "3 three"}, ord: true, fbp: `
                 '\n' -> SEP Split(text/Split)
                 ' ' -> DATA Space(core/Kick)

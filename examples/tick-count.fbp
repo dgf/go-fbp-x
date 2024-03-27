@@ -1,0 +1,3 @@
+'bang' -> DATA Ticker(core/Tick) OUT -> IN Counter(core/Count) OUT -> IN Display(core/Output)
+# every second
+'1S' -> INTV Ticker
