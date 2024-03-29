@@ -70,23 +70,39 @@ func Tick() process.Process {
 	}
 
 	go func() {
-		d := <-t.data
-		v, err := ParseTimeISO8601(<-t.intv)
+		defer close(t.out)
+
+		data, ok := <-t.data
+		if !ok {
+			return
+		}
+
+		i, ok := <-t.intv
+		if !ok {
+			return
+		}
+
+		intv, err := ParseTimeISO8601(i)
 		if err != nil {
 			panic(err)
 		}
 
 		for {
 			select {
-			case i := <-t.intv:
-				v, err = ParseTimeISO8601(i)
+			case i, ok := <-t.intv:
+				if !ok {
+					return
+				}
+				intv, err = ParseTimeISO8601(i)
 				if err != nil {
 					panic(err)
 				}
-			case d = <-t.data:
-				continue
-			case <-time.After(v):
-				t.out <- d
+			case data = <-t.data:
+				if !ok {
+					return
+				}
+			case <-time.After(intv):
+				t.out <- data
 			}
 		}
 	}()

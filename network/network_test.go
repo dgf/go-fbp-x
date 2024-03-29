@@ -1,9 +1,11 @@
 package network_test
 
 import (
+	"context"
 	"reflect"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -15,7 +17,7 @@ import (
 	"github.com/dgf/go-fbp-x/process/text"
 )
 
-func NewTestFactory(out chan<- string) process.Factory {
+func newFactory(out chan<- string) process.Factory {
 	return process.NewFactory(map[string]func() process.Process{
 		"core/Clone":  func() process.Process { return core.Clone() },
 		"core/Count":  func() process.Process { return core.Count() },
@@ -61,29 +63,44 @@ func TestRun(t *testing.T) {
                 Read ERR -> IN Display`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			out := make(chan string, 1)
-			done := make(chan []string, 1)
-			traces := make(chan network.Trace, 1)
-
-			if graph, err := dsl.Parse(strings.NewReader(tc.fbp)); err != nil {
+			graph, err := dsl.Parse(strings.NewReader(tc.fbp))
+			if err != nil {
 				t.Errorf("Parse failed: %v", err)
-				return
-			} else if err := network.NewNetwork(NewTestFactory(out)).Run(graph, traces); err != nil {
-				t.Errorf("Run failed: %v", err)
 				return
 			}
 
+			wg := sync.WaitGroup{}
+			out := make(chan string, 1)
+			done := make(chan []string, 1)
+			ctx, cancelRun := context.WithCancel(context.Background())
+
+			traces := make(chan network.Trace, 1)
+			defer close(traces)
 			go func() {
 				for range traces {
 					// discard
 				}
 			}()
 
+			wg.Add(1)
 			go func() {
+				defer wg.Done()
+
+				if err := network.NewNetwork(newFactory(out)).Run(ctx, graph, traces); err != nil {
+					t.Errorf("Run failed: %v", err)
+					return
+				}
+			}()
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+
 				act := make([]string, len(tc.out))
 				for i := range len(tc.out) {
 					act[i] = <-out
 				}
+				cancelRun()
 				done <- act
 			}()
 
@@ -99,6 +116,8 @@ func TestRun(t *testing.T) {
 					t.Errorf("Run failed got: %q, want: %q", act, tc.out)
 				}
 			}
+
+			wg.Wait()
 		})
 	}
 }

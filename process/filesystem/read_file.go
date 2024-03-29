@@ -23,6 +23,9 @@ func ReadFile() process.Process {
 	}
 
 	go func() {
+		defer close(rf.errs)
+		defer close(rf.out)
+
 		for i := range rf.in {
 			if s, ok := i.(string); !ok {
 				panic(fmt.Sprintf("Invalid fs/ReadFile input %q", i))

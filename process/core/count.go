@@ -14,6 +14,8 @@ func Count() process.Process {
 	}
 
 	go func() {
+		defer close(c.out)
+
 		cnt := 0
 		for range c.in {
 			cnt++

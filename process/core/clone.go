@@ -14,8 +14,10 @@ func Clone() process.Process {
 	}
 
 	go func() {
-		for i := range c.in {
-			c.out <- i
+		defer close(c.out)
+
+		for in := range c.in {
+			c.out <- in
 		}
 	}()
 

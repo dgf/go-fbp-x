@@ -1,14 +1,15 @@
 package network
 
 import (
+	"context"
 	"fmt"
+	"sync"
 
 	"github.com/dgf/go-fbp-x/process"
 )
 
 type Network interface {
-	Processes() map[string]process.Process
-	Run(graph Graph, traces chan<- Trace) error
+	Run(ctx context.Context, graph Graph, traces chan<- Trace) error
 }
 
 type packet struct {
@@ -78,36 +79,61 @@ func (n *net) connect(connections []Connection) error {
 	return nil
 }
 
-func (n *net) Processes() map[string]process.Process {
-	procs := map[string]process.Process{}
+func (n *net) Run(ctx context.Context, graph Graph, traces chan<- Trace) error {
+	wg := sync.WaitGroup{}
 
-	return procs
-}
-
-func (n *net) Run(graph Graph, traces chan<- Trace) error {
 	if err := n.reference(graph.Components); err != nil {
 		return err
 	} else if err := n.connect(graph.Connections); err != nil {
 		return err
 	}
 
+	wg.Add(len(n.demuxes))
 	for l, d := range n.demuxes {
 		go func(link Link, source <-chan any, targets []targetChannel) {
+			defer wg.Done()
+
 			for value := range source {
 				for _, target := range targets {
-					traces <- Trace{value, Connection{Source: link, Target: target.Link}}
-					target.channel <- value
+					select {
+					case <-ctx.Done():
+						return
+					default:
+						traces <- Trace{value, Connection{Source: link, Target: target.Link}}
+						target.channel <- value
+					}
 				}
 			}
 		}(l, d.source, d.targets)
 	}
 
+	wg.Add(len(n.initialIPs))
 	for _, p := range n.initialIPs {
 		go func(connection Connection, data string, target chan<- any) {
-			traces <- Trace{data, connection}
-			target <- data
+			defer wg.Done()
+
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				traces <- Trace{data, connection}
+				target <- data
+			}
 		}(p.Connection, p.data, p.target)
 	}
 
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		<-ctx.Done()
+		for _, p := range n.processes {
+			for _, i := range p.Inputs() {
+				close(i.Channel)
+			}
+		}
+	}()
+
+	wg.Wait()
 	return nil
 }

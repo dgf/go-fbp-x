@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -20,7 +21,7 @@ type Context struct{}
 
 type ProcsCmd struct{}
 
-func (p *ProcsCmd) Run(ctx *Context) error {
+func (p *ProcsCmd) Run(_ *Context) error {
 	fmt.Println(cli.NewFactory(make(chan string, 1)))
 	return nil
 }
@@ -30,17 +31,18 @@ type RunCmd struct {
 	Trace bool   `default:"false" help:"Enable trace mode." short:"t"`
 }
 
-func (r *RunCmd) Run(ctx *Context) error {
-	exit := make(chan bool, 1)
+func (r *RunCmd) Run(_ *Context) error {
+	ctx, cancelRun := context.WithCancel(context.Background())
 	sigs := make(chan os.Signal, 1)
+	defer close(sigs)
 
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-sigs
-		exit <- true
+		cancelRun()
 	}()
 
-	cli.Run(r.Path, r.Trace, exit)
+	cli.Run(ctx, r.Path, r.Trace)
 	return nil
 }
 

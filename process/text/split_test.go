@@ -15,7 +15,7 @@ func TestUnescape(t *testing.T) {
 		exp  string
 		err  string
 	}{
-		{"char dot error", '.', "", "invalid"},
+		{"char dot error", '.', "", "value"},
 		{"string slash", "/", "/", ""},
 		{"string new line", "\n", "\n", ""},
 		{"raw dash", `-`, "-", ""},
@@ -57,7 +57,8 @@ func TestSplit(t *testing.T) {
 			in := p.Inputs()["in"]
 			sep := p.Inputs()["sep"]
 			out := p.Outputs()["out"]
-			act := make(chan []string, 1)
+			done := make(chan []string, 1)
+			defer close(done)
 
 			go func() {
 				sep.Channel <- tc.sep
@@ -65,15 +66,16 @@ func TestSplit(t *testing.T) {
 			}()
 
 			go func() {
-				a := make([]string, len(tc.out))
-				for range len(tc.out) {
-					s := <-out.Channel
-					a = append(a, s.(string))
+				act := make([]string, len(tc.out))
+				for i := range len(tc.out) {
+					o := <-out.Channel
+					act[i] = o.(string)
 				}
-				act <- a
+				done <- act
 			}()
 
-			if reflect.DeepEqual(act, tc.out) {
+			act := <-done
+			if !reflect.DeepEqual(act, tc.out) {
 				t.Errorf("Split got: %v, want: %v", act, tc.out)
 			}
 		})

@@ -20,8 +20,20 @@ func Append() process.Process {
 	}
 
 	go func() {
+		defer close(a.out)
+
 		for {
-			a.out <- fmt.Sprintf("%v%v", <-a.in, <-a.affix)
+			in, ok := <-a.in
+			if !ok {
+				return
+			}
+
+			affix, ok := <-a.affix
+			if !ok {
+				return
+			}
+
+			a.out <- fmt.Sprintf("%v%v", in, affix)
 		}
 	}()
 

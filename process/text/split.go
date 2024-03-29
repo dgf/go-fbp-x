@@ -23,41 +23,55 @@ func NewSplit() *split {
 	}
 }
 
-const splitErrPrefix = "Invalid core/Split"
-
 func Split() process.Process {
 	s := NewSplit()
 
 	go func() {
-		if currentSep, err := s.CastAndUnescape(<-s.sep); err != nil { // requires a seperator upfront
-			panic(fmt.Sprintf("%s sep input: %v", splitErrPrefix, err))
-		} else {
-			for {
-				select {
-				case lastSep := <-s.sep: // replace seperator
-					currentSep, err = s.CastAndUnescape(lastSep)
-					if err != nil {
-						panic(fmt.Sprintf("%s sep input: %v", splitErrPrefix, err))
-					}
-				case i := <-s.in:
-					if is, ok := i.(string); !ok {
-						panic(fmt.Sprintf("%s input %q", splitErrPrefix, i))
-					} else {
-						for _, l := range strings.Split(is, currentSep) {
-							s.out <- l
-						}
-					}
-				}
-			}
+		defer close(s.out)
+
+		if err := s.Process(); err != nil {
+			panic(fmt.Sprintf("Invalid core/Split %v", err))
 		}
 	}()
 
 	return s
 }
 
+func (s *split) Process() error {
+	if firstSep, ok := <-s.sep; !ok {
+		return nil
+	} else if currentSep, err := s.CastAndUnescape(firstSep); err != nil { // requires a seperator upfront
+		return fmt.Errorf("separator: %w", err)
+	} else {
+		for {
+			select {
+			case nextSep, ok := <-s.sep: // replace seperator
+				if !ok {
+					return nil
+				}
+				currentSep, err = s.CastAndUnescape(nextSep)
+				if err != nil {
+					return fmt.Errorf("separator: %w", err)
+				}
+			case in, ok := <-s.in:
+				if !ok {
+					return nil
+				}
+				if is, ok := in.(string); !ok {
+					return fmt.Errorf("input %q", in)
+				} else {
+					for _, part := range strings.Split(is, currentSep) {
+						s.out <- part
+					}
+				}
+			}
+		}
+	}
+}
+
 func (s *split) CastAndUnescape(sep any) (string, error) {
 	if currentSep, ok := sep.(string); !ok {
-		return "", fmt.Errorf("invalid seperator %q", sep)
+		return "", fmt.Errorf("value %v", sep)
 	} else {
 		return s.replacer.Replace(currentSep), nil
 	}
