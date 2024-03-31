@@ -1,6 +1,7 @@
 package process
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 
@@ -9,6 +10,7 @@ import (
 
 type Factory interface {
 	Create(name string) (Process, bool)
+	Procs() map[string]Process
 	String() string
 }
 
@@ -28,41 +30,34 @@ func (f *factory) Create(name string) (Process, bool) {
 	}
 }
 
-func inputStringers(inputs map[string]Input) map[string]string {
-	s := map[string]string{}
-	for n, i := range inputs {
-		s[n] = i.String()
-	}
-	return s
-}
-
-func outputStringers(outputs map[string]Output) map[string]string {
-	s := map[string]string{}
-	for n, o := range outputs {
-		s[n] = o.String()
-	}
-	return s
-}
-
-func streamDoc(ms map[string]string) string {
+func portsDoc[S fmt.Stringer](ports map[string]S) string {
 	sb := strings.Builder{}
-	is := maps.Keys(ms)
-	slices.Sort(is)
-	for _, name := range is {
+	keys := maps.Keys(ports)
+	slices.Sort(keys)
+	for _, key := range keys {
 		sb.WriteString("\t\t")
-		sb.WriteString(name)
+		sb.WriteString(key)
 		sb.WriteString(" ")
 
-		f := ms[name]
-		sb.WriteString(f)
+		f := ports[key]
+		sb.WriteString(f.String())
 		sb.WriteString("\n")
 	}
 	return sb.String()
 }
 
+func (f *factory) Procs() map[string]Process {
+	procs := map[string]Process{}
+	for name, proc := range f.procs {
+		procs[name] = proc()
+	}
+	return procs
+}
+
 func (f *factory) String() string {
 	sb := strings.Builder{}
-	names := maps.Keys(f.procs)
+	procs := f.Procs()
+	names := maps.Keys(procs)
 	slices.Sort(names)
 
 	for _, name := range names {
@@ -70,12 +65,12 @@ func (f *factory) String() string {
 		sb.WriteString(name)
 		sb.WriteString(": ")
 
-		p := f.procs[name]()
+		p := procs[name]
 		sb.WriteString(p.Description())
 		sb.WriteString("\n\tinputs:\n")
-		sb.WriteString(streamDoc(inputStringers(p.Inputs())))
+		sb.WriteString(portsDoc(p.Inputs()))
 		sb.WriteString("\toutputs:\n")
-		sb.WriteString(streamDoc(outputStringers(p.Outputs())))
+		sb.WriteString(portsDoc(p.Outputs()))
 	}
 
 	return sb.String()
