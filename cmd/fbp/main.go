@@ -43,8 +43,7 @@ func (r *RunCmd) Run(_ *Context) error {
 		cancelRun()
 	}()
 
-	cli.Run(ctx, r.Path, r.Trace)
-	return nil
+	return cli.Run(ctx, r.Path, r.Trace)
 }
 
 type ServeCmd struct {
