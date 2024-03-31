@@ -18,14 +18,14 @@ func Kick() process.Process {
 	go func() {
 		defer close(k.out)
 
-		d, ok := <-k.data
+		data, ok := <-k.data
 		if !ok {
 			return
 		}
 
 		for {
 			select {
-			case d, ok = <-k.data:
+			case data, ok = <-k.data:
 				if !ok {
 					return
 				}
@@ -33,7 +33,7 @@ func Kick() process.Process {
 				if !ok {
 					return
 				}
-				k.out <- d
+				k.out <- data
 			}
 		}
 	}()

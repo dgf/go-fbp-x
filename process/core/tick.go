@@ -31,14 +31,14 @@ func ParseTimeISO8601(t any) (time.Duration, error) {
 				return d, err
 			} else {
 				n = ""
-				d += time.Duration(i * int(time.Hour))
+				d += time.Duration(int64(i) * int64(time.Hour))
 			}
 		case 'M':
 			if i, err := strconv.Atoi(n); err != nil {
 				return d, err
 			} else {
 				n = ""
-				d += time.Duration(i * int(time.Minute))
+				d += time.Duration(int64(i) * int64(time.Minute))
 			}
 		case 'S':
 			if f, err := strconv.ParseFloat(n, 32); err != nil {
@@ -46,7 +46,7 @@ func ParseTimeISO8601(t any) (time.Duration, error) {
 			} else {
 				n = ""
 				sec, ms := math.Modf(f)
-				d += time.Duration(int(sec)*int(time.Second) + int(math.Round(ms*1000))*int(time.Millisecond))
+				d += time.Duration(int64(sec)*int64(time.Second) + int64(math.Round(ms*1000))*int64(time.Millisecond))
 			}
 		default:
 			if unicode.IsNumber(c) || c == '.' {
