@@ -9,6 +9,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/dgf/go-fbp-x/cmd/fbp/cli"
+	"github.com/dgf/go-fbp-x/web"
 )
 
 var (
@@ -46,8 +47,17 @@ func (r *RunCmd) Run(_ *Context) error {
 	return nil
 }
 
+type ServeCmd struct {
+	Addr string `arg:"" default:":9876" name:"addr" help:"Listen address."`
+}
+
+func (s *ServeCmd) Run(_ *Context) error {
+	return web.Serve(s.Addr)
+}
+
 var cmd struct {
 	Procs ProcsCmd `cmd:"" help:"List registred processes."`
+	Serve ServeCmd `cmd:"" help:"Serve web interface."`
 	Run   RunCmd   `cmd:"" help:"Run process."`
 }
 

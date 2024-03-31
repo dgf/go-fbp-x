@@ -1,0 +1,153 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <script src="wasm_exec.js"></script>
+  <script>
+    const go = new Go()
+    WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
+      go.run(result.instance)
+
+      document.getElementById('runFlow').disabled = false
+      const $procList = document.createElement('dl')
+
+      for (const proc of procsFBP()) {
+        const $name = document.createElement('dt')
+        $name.innerHTML = proc.name
+
+        const $desc = document.createElement('dd')
+        $desc.innerHTML = proc.desc
+
+        const $ports = document.createElement('dl')
+
+        const $inputsTerm = document.createElement('dt')
+        $inputsTerm.innerHTML = 'inputs'
+        $ports.append($inputsTerm)
+        for (const input of proc.inputs) {
+          const $input = document.createElement('dd')
+          $input.innerHTML = `${input.name}: ${input.type}`
+          $ports.append($input)
+        }
+
+        const $outputsTerm = document.createElement('dt')
+        $outputsTerm.innerHTML = 'outputs'
+        $ports.append($outputsTerm)
+        for (const output of proc.outputs) {
+          const $output = document.createElement('dd')
+          $output.innerHTML = `${output.name}: ${output.type}`
+          $ports.append($output)
+        }
+
+        const $portsContainer = document.createElement('dd')
+        $portsContainer.append($ports)
+
+        $procList.append($name)
+        $procList.append($desc)
+        $procList.append($portsContainer)
+      }
+
+      const $procs = document.getElementById('procs')
+      $procs.innerHTML = ''
+      $procs.append($procList)
+    })
+  </script>
+  <title>FBP WebAssembly Examples</title>
+</head>
+
+<body>
+  <div style="display: flex; gap: 2rem;">
+    <div style="flex: auto;">
+      <h1>FBP WebAssembly Examples</h1>
+      <div>
+        <label>Example Flows</label>
+        <select onchange="selectFlow(this)">
+          <option value="simpleTick">simple ticker</option>
+          <option value="staticPrint">static print</option>
+        </select>
+      </div>
+      <div>
+        <textarea id="flow" cols="50" rows="5">
+        </textarea>
+      </div>
+      <div>
+        <button id="runFlow" onclick="runFlow()" disabled>Run</button>
+      </div>
+      <div id="flows" style="display: flex; gap: 2rem;"></div>
+    </div>
+    <div style="flex: min-content;">
+      <h2>Processes</h2>
+      <div id="procs">
+        loading ...
+      </div>
+    </div>
+  </div>
+  <script>
+    const flows = {
+      simpleTick: `
+'1S' -> INTV Ticker(core/Tick)
+'bang' -> DATA Ticker OUT -> IN Counter(core/Count)
+Counter OUT -> IN Display(core/Output)`,
+      staticPrint: `
+'1' -> IN Display(core/Output)
+'2' -> IN Display
+'3' -> IN Display`,
+    }
+
+    const $flow = document.getElementById('flow')
+    const $flows = document.getElementById('flows')
+    $flow.value = flows['simpleTick'].trim()
+
+    function selectFlow(e) {
+      $flow.value = flows[e.value].trim()
+    }
+
+    function runFlow() {
+      const flow = $flow.value
+      const id = crypto.randomUUID()
+
+      const $id = document.createElement('div')
+      $id.innerHTML = id
+
+      const $close = document.createElement('button')
+      $close.disabled = true
+      $close.innerHTML = 'Close'
+
+      const $cancel = document.createElement('button')
+      $cancel.innerHTML = 'Cancel'
+
+      const $output = document.createElement('div')
+      $output.setAttribute('id', id)
+
+      const $control = document.createElement('div')
+      $control.append($id)
+      $control.append($cancel)
+      $control.append($close)
+
+      const $run = document.createElement('section')
+      $run.append($control)
+      $run.append($output)
+      $flows.prepend($run)
+
+      $close.addEventListener("click", () => {
+        $run.remove()
+      })
+
+      $cancel.addEventListener("click", () => {
+        const result = stopFBP(id)
+        if (result) {
+          alert(`Canceling flow ${id} failed: ${result}`)
+        }
+        $cancel.disabled = true
+        $close.disabled = false
+      })
+
+      const result = runFBP(id, flow)
+      if (result && result.error) {
+        alert(`Runnning flow ${id} failed: ${result.error}`)
+      }
+    }
+  </script>
+</body>
+
+</html>
