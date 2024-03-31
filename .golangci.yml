@@ -8,3 +8,6 @@ linters:
     - staticcheck
     - typecheck
     - unused
+issues:
+  exclude-dirs:
+    - web/fbp
