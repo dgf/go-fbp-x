@@ -12,7 +12,7 @@ type output struct {
 }
 
 func Output(out chan<- string) process.Process {
-	o := &output{in: make(chan any)}
+	o := &output{in: make(chan any, 1)}
 
 	go func() {
 		for i := range o.in {
