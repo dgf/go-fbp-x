@@ -4,6 +4,8 @@ import (
 	"github.com/dgf/go-fbp-x/process"
 	"github.com/dgf/go-fbp-x/process/core"
 	"github.com/dgf/go-fbp-x/process/filesystem"
+	"github.com/dgf/go-fbp-x/process/html"
+	"github.com/dgf/go-fbp-x/process/http"
 	"github.com/dgf/go-fbp-x/process/text"
 )
 
@@ -15,6 +17,8 @@ func NewFactory(out chan<- string) process.Factory {
 		"core/Output": func() process.Process { return core.Output(out) },
 		"core/Tick":   func() process.Process { return core.Tick() },
 		"fs/ReadFile": func() process.Process { return filesystem.ReadFile() },
+		"html/Query":  func() process.Process { return html.Query() },
+		"http/Get":    func() process.Process { return http.Get() },
 		"text/Append": func() process.Process { return text.Append() },
 		"text/Split":  func() process.Process { return text.Split() },
 	})

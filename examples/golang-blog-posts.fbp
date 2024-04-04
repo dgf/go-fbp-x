@@ -1,0 +1,4 @@
+'3S' -> TIMEOUT Get(http/Get)
+'https://go.dev/blog/' -> URL Get OUT -> IN SelectPosts(html/Query) OUT -> IN Display(core/Output)
+'.blogtitle a' -> SEL SelectPosts ERR -> IN Display
+Get ERR -> IN Display
