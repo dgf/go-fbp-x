@@ -1,11 +1,11 @@
-package core_test
+package util_test
 
 import (
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/dgf/go-fbp-x/process/core"
+	"github.com/dgf/go-fbp-x/util"
 )
 
 func TestParseTimeISO8601(t *testing.T) {
@@ -26,7 +26,7 @@ func TestParseTimeISO8601(t *testing.T) {
 		{"all parts", "2H3M4S", "", time.Duration(2*time.Hour + 3*time.Minute + 4*time.Second)},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			act, err := core.ParseTimeISO8601(tc.in)
+			act, err := util.ParseTimeISO8601(tc.in)
 			if len(tc.err) > 0 {
 				if err == nil {
 					t.Errorf("ParseTimeISO8601 no error, but should contain: %s", tc.err)

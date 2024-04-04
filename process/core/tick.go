@@ -2,64 +2,16 @@ package core
 
 import (
 	"fmt"
-	"math"
-	"strconv"
 	"time"
-	"unicode"
 
 	"github.com/dgf/go-fbp-x/process"
+	"github.com/dgf/go-fbp-x/util"
 )
 
 type tick struct {
 	data chan any
 	intv chan any
 	out  chan any
-}
-
-func ParseTimeISO8601(t any) (time.Duration, error) {
-	d := time.Duration(0)
-	s, ok := t.(string)
-	if !ok {
-		return d, fmt.Errorf("invalid duration input %q", t)
-	}
-
-	n := ""
-	for _, c := range s {
-		switch c {
-		case 'H':
-			if i, err := strconv.Atoi(n); err != nil {
-				return d, err
-			} else {
-				n = ""
-				d += time.Duration(int64(i) * int64(time.Hour))
-			}
-		case 'M':
-			if i, err := strconv.Atoi(n); err != nil {
-				return d, err
-			} else {
-				n = ""
-				d += time.Duration(int64(i) * int64(time.Minute))
-			}
-		case 'S':
-			if f, err := strconv.ParseFloat(n, 32); err != nil {
-				return d, err
-			} else {
-				n = ""
-				sec, ms := math.Modf(f)
-				d += time.Duration(int64(sec)*int64(time.Second) + int64(math.Round(ms*1000))*int64(time.Millisecond))
-			}
-		default:
-			if unicode.IsNumber(c) || c == '.' {
-				n += string(c)
-				continue
-			}
-		}
-	}
-
-	if d == 0 {
-		return d, fmt.Errorf("invalid definition %q causes a duration of zero", t)
-	}
-	return d, nil
 }
 
 func Tick() process.Process {
@@ -82,9 +34,9 @@ func Tick() process.Process {
 			return
 		}
 
-		intv, err := ParseTimeISO8601(i)
+		intv, err := util.ParseTimeISO8601(i)
 		if err != nil {
-			panic(err)
+			panic(fmt.Sprintf("Invalid core/Tick interval: %v", err))
 		}
 
 		for {
@@ -93,9 +45,9 @@ func Tick() process.Process {
 				if !ok {
 					return
 				}
-				intv, err = ParseTimeISO8601(i)
+				intv, err = util.ParseTimeISO8601(i)
 				if err != nil {
-					panic(err)
+					panic(fmt.Sprintf("Invalid core/Tick interval: %v", err))
 				}
 			case data = <-t.data:
 				if !ok {
