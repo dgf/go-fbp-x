@@ -64,6 +64,7 @@
         <select onchange="selectFlow(this)">
           <option value="simpleTick">simple ticker</option>
           <option value="staticPrint">static print</option>
+          <option value="goBlogExract">list Go blog posts</option>
         </select>
       </div>
       <div>
@@ -72,6 +73,7 @@
       </div>
       <div>
         <button id="runFlow" onclick="runFlow()" disabled>Run</button>
+        You can use <a href="https://noflojs.org/visualize/">NoFlo Visualize</a> to render a process.
       </div>
       <div id="flows" style="display: flex; gap: 2rem;"></div>
     </div>
@@ -92,6 +94,11 @@ Counter OUT -> IN Display(core/Output)`,
 '1' -> IN Display(core/Output)
 '2' -> IN Display
 '3' -> IN Display`,
+      goBlogExract: `
+'3S' -> TIMEOUT Get(http/Get)
+'https://corsproxy.io/?https://go.dev/blog/' -> URL Get ERR -> IN Display
+Get OUT -> IN SelectPosts(html/Query) OUT -> IN Display(core/Output)
+'.blogtitle a' -> SEL SelectPosts ERR -> IN Display`,
     }
 
     const $flow = document.getElementById('flow')
