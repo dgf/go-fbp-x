@@ -3,7 +3,7 @@ package text
 import (
 	"fmt"
 
-	"github.com/dgf/go-fbp-x/process"
+	"github.com/dgf/go-fbp-x/pkg/process"
 )
 
 type append struct {

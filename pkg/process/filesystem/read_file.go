@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/dgf/go-fbp-x/process"
+	"github.com/dgf/go-fbp-x/pkg/process"
 )
 
 type readFile struct {

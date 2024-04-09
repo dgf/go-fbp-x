@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dgf/go-fbp-x/network"
+	"github.com/dgf/go-fbp-x/pkg/network"
 )
 
 var (

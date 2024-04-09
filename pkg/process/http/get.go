@@ -5,8 +5,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/dgf/go-fbp-x/process"
-	"github.com/dgf/go-fbp-x/util"
+	"github.com/dgf/go-fbp-x/pkg/process"
+	"github.com/dgf/go-fbp-x/pkg/util"
 )
 
 type get struct {

@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/dgf/go-fbp-x/network"
+	"github.com/dgf/go-fbp-x/pkg/network"
 )
 
 func ExampleString() {

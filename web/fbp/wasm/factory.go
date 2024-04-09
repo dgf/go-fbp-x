@@ -1,11 +1,11 @@
 package wasm
 
 import (
-	"github.com/dgf/go-fbp-x/process"
-	"github.com/dgf/go-fbp-x/process/core"
-	"github.com/dgf/go-fbp-x/process/html"
-	"github.com/dgf/go-fbp-x/process/http"
-	"github.com/dgf/go-fbp-x/process/text"
+	"github.com/dgf/go-fbp-x/pkg/process"
+	"github.com/dgf/go-fbp-x/pkg/process/core"
+	"github.com/dgf/go-fbp-x/pkg/process/html"
+	"github.com/dgf/go-fbp-x/pkg/process/http"
+	"github.com/dgf/go-fbp-x/pkg/process/text"
 )
 
 func NewFactory(out chan<- string) process.Factory {

@@ -1,6 +1,6 @@
 package core
 
-import "github.com/dgf/go-fbp-x/process"
+import "github.com/dgf/go-fbp-x/pkg/process"
 
 type kick struct {
 	data chan any

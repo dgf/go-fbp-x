@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dgf/go-fbp-x/process"
+	"github.com/dgf/go-fbp-x/pkg/process"
 )
 
 type split struct {

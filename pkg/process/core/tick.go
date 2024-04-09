@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dgf/go-fbp-x/process"
-	"github.com/dgf/go-fbp-x/util"
+	"github.com/dgf/go-fbp-x/pkg/process"
+	"github.com/dgf/go-fbp-x/pkg/util"
 )
 
 type tick struct {

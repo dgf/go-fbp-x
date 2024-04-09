@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/dgf/go-fbp-x/process/http"
+	"github.com/dgf/go-fbp-x/pkg/process/http"
 )
 
 func TestGet(t *testing.T) {

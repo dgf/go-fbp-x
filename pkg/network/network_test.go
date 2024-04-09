@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dgf/go-fbp-x/dsl"
-	"github.com/dgf/go-fbp-x/network"
-	"github.com/dgf/go-fbp-x/process"
-	"github.com/dgf/go-fbp-x/process/core"
-	"github.com/dgf/go-fbp-x/process/filesystem"
-	"github.com/dgf/go-fbp-x/process/text"
+	"github.com/dgf/go-fbp-x/pkg/dsl"
+	"github.com/dgf/go-fbp-x/pkg/network"
+	"github.com/dgf/go-fbp-x/pkg/process"
+	"github.com/dgf/go-fbp-x/pkg/process/core"
+	"github.com/dgf/go-fbp-x/pkg/process/filesystem"
+	"github.com/dgf/go-fbp-x/pkg/process/text"
 )
 
 func newFactory(out chan<- string) process.Factory {

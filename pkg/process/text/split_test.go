@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dgf/go-fbp-x/process/text"
+	"github.com/dgf/go-fbp-x/pkg/process/text"
 )
 
 func TestUnescape(t *testing.T) {

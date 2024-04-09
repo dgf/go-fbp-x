@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/dgf/go-fbp-x/process"
+	"github.com/dgf/go-fbp-x/pkg/process"
 )
 
 type Network interface {
@@ -135,5 +135,6 @@ func (n *net) Run(ctx context.Context, graph Graph, traces chan<- Trace) error {
 	}()
 
 	wg.Wait()
+	traces <- Trace{"stopped", Connection{}}
 	return nil
 }

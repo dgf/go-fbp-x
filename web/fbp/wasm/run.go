@@ -7,8 +7,8 @@ import (
 	"syscall/js"
 	"time"
 
-	"github.com/dgf/go-fbp-x/dsl"
-	"github.com/dgf/go-fbp-x/network"
+	"github.com/dgf/go-fbp-x/pkg/dsl"
+	"github.com/dgf/go-fbp-x/pkg/network"
 )
 
 func Run(ctx context.Context, id, flow string) error {

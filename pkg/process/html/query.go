@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/andybalholm/cascadia"
-	"github.com/dgf/go-fbp-x/process"
+	"github.com/dgf/go-fbp-x/pkg/process"
 	"golang.org/x/net/html"
 )
 

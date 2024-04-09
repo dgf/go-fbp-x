@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dgf/go-fbp-x/dsl"
-	"github.com/dgf/go-fbp-x/network"
+	"github.com/dgf/go-fbp-x/pkg/dsl"
+	"github.com/dgf/go-fbp-x/pkg/network"
 )
 
 func DataTarget(data, port, component string) network.Connection {

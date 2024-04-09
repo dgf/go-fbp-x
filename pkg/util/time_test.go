@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dgf/go-fbp-x/util"
+	"github.com/dgf/go-fbp-x/pkg/util"
 )
 
 func TestParseTimeISO8601(t *testing.T) {
