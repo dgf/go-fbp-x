@@ -39,7 +39,10 @@ func Tick() process.Process {
 			panic(fmt.Sprintf("Invalid core/Tick interval: %v", err))
 		}
 
+		timer := time.NewTimer(intv)
 		for {
+			timer.Reset(intv)
+
 			select {
 			case i, ok := <-t.intv:
 				if !ok {
@@ -49,11 +52,11 @@ func Tick() process.Process {
 				if err != nil {
 					panic(fmt.Sprintf("Invalid core/Tick interval: %v", err))
 				}
-			case data = <-t.data:
+			case data, ok = <-t.data:
 				if !ok {
 					return
 				}
-			case <-time.After(intv):
+			case <-timer.C:
 				t.out <- data
 			}
 		}
