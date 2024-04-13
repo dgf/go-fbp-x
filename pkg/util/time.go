@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 	"time"
 	"unicode"
 )
@@ -15,34 +16,34 @@ func ParseTimeISO8601(t any) (time.Duration, error) {
 		return d, fmt.Errorf("invalid duration input %q", t)
 	}
 
-	n := ""
+	n := strings.Builder{}
 	for _, c := range s {
 		switch c {
 		case 'H':
-			if i, err := strconv.Atoi(n); err != nil {
+			if i, err := strconv.Atoi(n.String()); err != nil {
 				return d, err
 			} else {
-				n = ""
+				n.Reset()
 				d += time.Duration(int64(i) * int64(time.Hour))
 			}
 		case 'M':
-			if i, err := strconv.Atoi(n); err != nil {
+			if i, err := strconv.Atoi(n.String()); err != nil {
 				return d, err
 			} else {
-				n = ""
+				n.Reset()
 				d += time.Duration(int64(i) * int64(time.Minute))
 			}
 		case 'S':
-			if f, err := strconv.ParseFloat(n, 32); err != nil {
+			if f, err := strconv.ParseFloat(n.String(), 32); err != nil {
 				return d, err
 			} else {
-				n = ""
+				n.Reset()
 				sec, ms := math.Modf(f)
 				d += time.Duration(int64(sec)*int64(time.Second) + int64(math.Round(ms*1000))*int64(time.Millisecond))
 			}
 		default:
 			if unicode.IsNumber(c) || c == '.' {
-				n += string(c)
+				n.WriteRune(c)
 				continue
 			}
 		}
