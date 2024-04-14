@@ -2,44 +2,10 @@ package text_test
 
 import (
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/dgf/go-fbp-x/pkg/process/text"
 )
-
-func TestUnescape(t *testing.T) {
-	for _, tc := range []struct {
-		name string
-		sep  any
-		exp  string
-		err  string
-	}{
-		{"char dot error", '.', "", "value"},
-		{"string slash", "/", "/", ""},
-		{"string new line", "\n", "\n", ""},
-		{"raw dash", `-`, "-", ""},
-		{"raw new line", `\n`, "\n", ""},
-		{"raw tab", `\t`, "\t", ""},
-		{"raw carriage return", `\r`, "\r", ""},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			act, err := text.NewSplit().CastAndUnescape(tc.sep)
-			if len(tc.err) > 0 {
-				if err == nil {
-					t.Errorf("Unescape error expected")
-				} else if !strings.Contains(err.Error(), tc.err) {
-					t.Errorf("Unescape error got: %q, should contain: %q", err, tc.err)
-				}
-			} else if err != nil {
-				t.Errorf("Unescape error %q", err)
-			}
-			if act != tc.exp {
-				t.Errorf("Unescape seperator got: %q, want: %q", act, tc.exp)
-			}
-		})
-	}
-}
 
 func TestSplit(t *testing.T) {
 	for _, tc := range []struct {
@@ -54,9 +20,13 @@ func TestSplit(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			p := text.Split()
-			in := p.Inputs()["in"]
-			sep := p.Inputs()["sep"]
 			out := p.Outputs()["out"]
+
+			in := p.Inputs()["in"]
+			defer close(in.Channel)
+			sep := p.Inputs()["sep"]
+			defer close(sep.Channel)
+
 			done := make(chan []string, 1)
 			defer close(done)
 
@@ -77,6 +47,54 @@ func TestSplit(t *testing.T) {
 			act := <-done
 			if !reflect.DeepEqual(act, tc.out) {
 				t.Errorf("Split got: %v, want: %v", act, tc.out)
+			}
+		})
+	}
+}
+
+func BenchmarkSplit(b *testing.B) {
+	p := text.Split()
+
+	in := p.Inputs()["in"]
+	defer close(in.Channel)
+	sep := p.Inputs()["sep"]
+	defer close(sep.Channel)
+
+	sep.Channel <- `test`
+
+	for _, tc := range []struct {
+		name string
+		sep  string
+	}{
+		{"test", `test`},
+		{"line breaks", `\n\r\t`},
+	} {
+		b.Run("separator "+tc.name, func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				sep.Channel <- tc.sep
+			}
+		})
+	}
+
+	out := p.Outputs()["out"]
+	go func() {
+		for {
+			<-out.Channel
+		}
+	}()
+
+	for _, tc := range []struct {
+		name string
+		sep  string
+		in   string
+	}{
+		{"line breaks", `\n`, "one\ntwo\nthree"},
+		{"multi dots", `.`, "1.2.3.4.5.6.7.8.9"},
+	} {
+		sep.Channel <- tc.sep
+		b.Run("input "+tc.name, func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				in.Channel <- tc.in
 			}
 		})
 	}

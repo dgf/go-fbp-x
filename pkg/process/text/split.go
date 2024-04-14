@@ -5,26 +5,21 @@ import (
 	"strings"
 
 	"github.com/dgf/go-fbp-x/pkg/process"
+	"github.com/dgf/go-fbp-x/pkg/util"
 )
 
 type split struct {
-	in       chan any
-	out      chan any
-	sep      chan any
-	replacer *strings.Replacer
-}
-
-func NewSplit() *split {
-	return &split{
-		in:       make(chan any, 1),
-		out:      make(chan any, 1),
-		sep:      make(chan any, 1),
-		replacer: strings.NewReplacer(`\n`, "\n", `\r`, "\r", `\t`, "\t"),
-	}
+	in  chan any
+	out chan any
+	sep chan any
 }
 
 func Split() process.Process {
-	s := NewSplit()
+	s := &split{
+		in:  make(chan any, 1),
+		out: make(chan any, 1),
+		sep: make(chan any, 1),
+	}
 
 	go func() {
 		defer close(s.out)
@@ -40,7 +35,7 @@ func Split() process.Process {
 func (s *split) Process() error {
 	if firstSep, ok := <-s.sep; !ok {
 		return nil
-	} else if currentSep, err := s.CastAndUnescape(firstSep); err != nil { // requires a seperator upfront
+	} else if currentSep, err := util.CastAndUnescapeRaw(firstSep); err != nil { // requires a seperator upfront
 		return fmt.Errorf("separator: %w", err)
 	} else {
 		for {
@@ -49,7 +44,7 @@ func (s *split) Process() error {
 				if !ok {
 					return nil
 				}
-				currentSep, err = s.CastAndUnescape(nextSep)
+				currentSep, err = util.CastAndUnescapeRaw(nextSep)
 				if err != nil {
 					return fmt.Errorf("separator: %w", err)
 				}
@@ -66,14 +61,6 @@ func (s *split) Process() error {
 				}
 			}
 		}
-	}
-}
-
-func (s *split) CastAndUnescape(sep any) (string, error) {
-	if currentSep, ok := sep.(string); !ok {
-		return "", fmt.Errorf("value %v", sep)
-	} else {
-		return s.replacer.Replace(currentSep), nil
 	}
 }
 
