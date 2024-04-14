@@ -46,7 +46,7 @@ func BenchmarkParseTimeISO8601(b *testing.B) {
 	for _, s := range []string{"1.234S", "1M2.345S", "1H2M3.456S"} {
 		b.Run(s, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				util.ParseTimeISO8601(s)
+				_, _ = util.ParseTimeISO8601(s)
 			}
 		})
 	}

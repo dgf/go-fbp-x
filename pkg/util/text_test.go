@@ -51,7 +51,7 @@ func BenchmarkCastAndUnescapeRaw(b *testing.B) {
 	} {
 		b.Run(tc.name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				util.CastAndUnescapeRaw(tc.raw)
+				_, _ = util.CastAndUnescapeRaw(tc.raw)
 			}
 		})
 	}
