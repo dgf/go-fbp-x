@@ -1,10 +1,14 @@
 package network
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/dgf/go-fbp-x/pkg/dsl"
+)
 
 type Trace struct {
 	Packet any
-	Connection
+	dsl.Connection
 }
 
 func (t Trace) String() string {

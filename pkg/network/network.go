@@ -5,22 +5,23 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/dgf/go-fbp-x/pkg/dsl"
 	"github.com/dgf/go-fbp-x/pkg/process"
 )
 
 type Network interface {
-	Run(ctx context.Context, graph Graph, traces chan<- Trace) error
+	Run(ctx context.Context, graph dsl.Graph, traces chan<- Trace) error
 }
 
 type packet struct {
 	target chan<- any
 	data   string
-	Connection
+	dsl.Connection
 }
 
 type targetChannel struct {
 	channel chan<- any
-	Link
+	dsl.Link
 }
 
 type demux struct {
@@ -31,7 +32,7 @@ type demux struct {
 type net struct {
 	factory    process.Factory
 	processes  map[string]process.Process
-	demuxes    map[Link]*demux
+	demuxes    map[dsl.Link]*demux
 	initialIPs []packet
 }
 
@@ -53,8 +54,8 @@ func (n *net) reference(components map[string]string) error {
 	return nil
 }
 
-func (n *net) connect(connections []Connection) error {
-	n.demuxes = map[Link]*demux{}
+func (n *net) connect(connections []dsl.Connection) error {
+	n.demuxes = map[dsl.Link]*demux{}
 
 	for _, c := range connections {
 		if target, ok := n.processes[c.Target.Component]; !ok {
@@ -79,7 +80,7 @@ func (n *net) connect(connections []Connection) error {
 	return nil
 }
 
-func (n *net) Run(ctx context.Context, graph Graph, traces chan<- Trace) error {
+func (n *net) Run(ctx context.Context, graph dsl.Graph, traces chan<- Trace) error {
 	wg := sync.WaitGroup{}
 
 	if err := n.reference(graph.Components); err != nil {
@@ -90,7 +91,7 @@ func (n *net) Run(ctx context.Context, graph Graph, traces chan<- Trace) error {
 
 	wg.Add(len(n.demuxes))
 	for l, d := range n.demuxes {
-		go func(link Link, source <-chan any, targets []targetChannel) {
+		go func(link dsl.Link, source <-chan any, targets []targetChannel) {
 			defer wg.Done()
 
 			for value := range source {
@@ -99,7 +100,7 @@ func (n *net) Run(ctx context.Context, graph Graph, traces chan<- Trace) error {
 					case <-ctx.Done():
 						return
 					default:
-						traces <- Trace{value, Connection{Source: link, Target: target.Link}}
+						traces <- Trace{value, dsl.Connection{Source: link, Target: target.Link}}
 						target.channel <- value
 					}
 				}
@@ -109,7 +110,7 @@ func (n *net) Run(ctx context.Context, graph Graph, traces chan<- Trace) error {
 
 	wg.Add(len(n.initialIPs))
 	for _, p := range n.initialIPs {
-		go func(connection Connection, data string, target chan<- any) {
+		go func(connection dsl.Connection, data string, target chan<- any) {
 			defer wg.Done()
 
 			select {
@@ -135,6 +136,6 @@ func (n *net) Run(ctx context.Context, graph Graph, traces chan<- Trace) error {
 	}()
 
 	wg.Wait()
-	traces <- Trace{"stopped", Connection{}}
+	traces <- Trace{"stopped", dsl.Connection{}}
 	return nil
 }

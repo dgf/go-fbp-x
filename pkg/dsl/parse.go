@@ -11,8 +11,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/dgf/go-fbp-x/pkg/network"
 )
 
 var (
@@ -59,7 +57,7 @@ func parse(pos int, part string) (in, component, process, out string, err error)
 	}
 }
 
-func link(component, port string) network.Link {
+func link(component, port string) Link {
 	portName := port
 	index := 0
 	if indexPortMatch.Match([]byte(port)) {
@@ -67,11 +65,11 @@ func link(component, port string) network.Link {
 		portName = portAndIndex[1]
 		index, _ = strconv.Atoi(portAndIndex[2]) // hint: number matched by regexp
 	}
-	return network.Link{Component: component, Port: strings.ToLower(portName), Index: index}
+	return Link{Component: component, Port: strings.ToLower(portName), Index: index}
 }
 
-func Parse(src io.Reader) (network.Graph, error) {
-	graph := network.Graph{
+func Parse(src io.Reader) (Graph, error) {
+	graph := Graph{
 		Components: map[string]string{},
 	}
 
@@ -83,14 +81,14 @@ func Parse(src io.Reader) (network.Graph, error) {
 	withoutComments := commentMatch.ReplaceAll(allBytes, []byte(""))
 	joinedSpaces := spacesMatch.ReplaceAll(withoutComments, []byte(" "))
 	for _, line := range strings.Split(string(joinedSpaces), "\n") {
-		connection := network.Connection{}
+		connection := Connection{}
 		for p, part := range connectionSplit.Split(line, -1) {
 			trimmed := strings.TrimSpace(part)
 			if len(trimmed) > 1 { // skip empty lines
 				if strings.HasPrefix(trimmed, "'") { // data input
 					connection.Data = strings.Trim(trimmed, "'")
 				} else if in, component, process, out, err := parse(p, trimmed); err != nil {
-					return network.Graph{}, err
+					return Graph{}, err
 				} else {
 
 					if len(process) > 0 {
@@ -100,7 +98,7 @@ func Parse(src io.Reader) (network.Graph, error) {
 					if len(connection.Data) > 0 || len(connection.Source.Component) > 0 {
 						connection.Target = link(component, in)
 						graph.Connections = append(graph.Connections, connection)
-						connection = network.Connection{}
+						connection = Connection{}
 					}
 
 					if len(out) > 0 {
