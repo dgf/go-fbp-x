@@ -21,8 +21,13 @@ type Connection struct {
 	Target Link
 }
 
+type Process struct {
+	Meta map[string]string
+	Name string
+}
+
 type Graph struct {
-	Components  map[string]string
+	Components  map[string]Process
 	Connections []Connection
 }
 
@@ -44,6 +49,24 @@ func (c Connection) String() string {
 	} else {
 		return fmt.Sprintf("%s %s > %s %s", c.Source.Component, portLabel(c.Source), portLabel(target), target.Component)
 	}
+}
+
+func (p Process) String() string {
+	sb := strings.Builder{}
+	sb.WriteString(p.Name)
+
+	if len(p.Meta) > 0 {
+		sb.WriteString(":")
+		keys := maps.Keys(p.Meta)
+		slices.Sort(keys)
+		entries := make([]string, len(keys))
+		for i, k := range keys {
+			entries[i] = k + "=" + p.Meta[k]
+		}
+		sb.WriteString(strings.Join(entries, ","))
+	}
+
+	return sb.String()
 }
 
 func (g Graph) String() string {

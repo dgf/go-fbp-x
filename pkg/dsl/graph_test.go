@@ -10,10 +10,10 @@ import (
 
 func ExampleString() {
 	g := dsl.Graph{
-		Components: map[string]string{
-			"one":   "DoSome",
-			"two":   "DoOther",
-			"three": "DoElse",
+		Components: map[string]dsl.Process{
+			"one":   {Name: "DoSome"},
+			"two":   {Name: "DoOther", Meta: map[string]string{"key": "value", "num": "123", "flag": "true"}},
+			"three": {Name: "DoElse"},
 		},
 		Connections: []dsl.Connection{
 			{Data: "data", Target: dsl.Link{Port: "in", Component: "one"}},
@@ -29,7 +29,7 @@ func ExampleString() {
 	// components:
 	// one > DoSome
 	// three > DoElse
-	// two > DoOther
+	// two > DoOther:flag=true,key=value,num=123
 	//
 	// connections:
 	// data > in one

@@ -20,7 +20,28 @@ var (
 	indexPortMatch  = regexp.MustCompile(`(\w+)\[(\d+)\]`)
 )
 
-func parseDefinition(part string) (in, component, process, out string, err error) {
+func parseProcess(process string) *Process {
+	nameAndMeta := strings.Split(process, ":")
+	name := strings.TrimSpace(nameAndMeta[0])
+	p := &Process{Name: name}
+
+	if len(nameAndMeta) == 2 {
+		parts := strings.Split(nameAndMeta[1], ",")
+		if len(parts) > 0 {
+			p.Meta = make(map[string]string, len(parts))
+			for _, part := range parts {
+				keyAndValue := strings.Split(part, "=")
+				if len(keyAndValue) == 2 {
+					p.Meta[strings.TrimSpace(keyAndValue[0])] = strings.TrimSpace(keyAndValue[1])
+				}
+			}
+		}
+	}
+
+	return p
+}
+
+func parseDefinition(part string) (in, component, out string, process *Process, err error) {
 	paraStart := strings.Index(part, "(")
 	paraEnd := strings.Index(part, ")")
 	if paraEnd < paraStart {
@@ -36,24 +57,24 @@ func parseDefinition(part string) (in, component, process, out string, err error
 		component = portAndName[1]
 	}
 
-	process = strings.Split(part[paraStart+1:paraEnd], ":")[0] // remove meta
+	process = parseProcess(part[paraStart+1 : paraEnd])
 	out = strings.TrimSpace(part[paraEnd+1:])
 	return
 }
 
-func parse(pos int, part string) (in, component, process, out string, err error) {
+func parse(pos int, part string) (in, component, out string, process *Process, err error) {
 	if strings.Contains(part, "(") {
 		return parseDefinition(part)
 	} else if conn := strings.Split(part, " "); len(conn) < 2 || len(conn) > 3 {
 		err = fmt.Errorf("invalid component defintion %q", part)
 		return
 	} else if len(conn) == 3 {
-		return conn[0], conn[1], "", conn[2], nil
+		return conn[0], conn[1], conn[2], nil, nil
 	} else {
 		if pos == 0 {
-			return "", conn[0], "", conn[1], nil
+			return "", conn[0], conn[1], nil, nil
 		}
-		return conn[0], conn[1], "", "", nil
+		return conn[0], conn[1], "", nil, nil
 	}
 }
 
@@ -70,7 +91,7 @@ func link(component, port string) Link {
 
 func Parse(src io.Reader) (Graph, error) {
 	graph := Graph{
-		Components: map[string]string{},
+		Components: map[string]Process{},
 	}
 
 	allBytes, err := io.ReadAll(src)
@@ -87,12 +108,12 @@ func Parse(src io.Reader) (Graph, error) {
 			if len(trimmed) > 1 { // skip empty lines
 				if strings.HasPrefix(trimmed, "'") { // data input
 					connection.Data = strings.Trim(trimmed, "'")
-				} else if in, component, process, out, err := parse(p, trimmed); err != nil {
+				} else if in, component, out, process, err := parse(p, trimmed); err != nil {
 					return Graph{}, err
 				} else {
 
-					if len(process) > 0 {
-						graph.Components[component] = process
+					if process != nil {
+						graph.Components[component] = *process
 					}
 
 					if len(connection.Data) > 0 || len(connection.Source.Component) > 0 {

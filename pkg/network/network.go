@@ -40,11 +40,11 @@ func NewNetwork(factory process.Factory) Network {
 	return &net{factory: factory}
 }
 
-func (n *net) reference(components map[string]string) error {
+func (n *net) reference(components map[string]dsl.Process) error {
 	n.processes = map[string]process.Process{}
 
 	for component, process := range components {
-		if pf, ok := n.factory.Create(process); !ok {
+		if pf, ok := n.factory.Create(process.Name); !ok {
 			return fmt.Errorf("process %q not available", process)
 		} else {
 			n.processes[component] = pf
