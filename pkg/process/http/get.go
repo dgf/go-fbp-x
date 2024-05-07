@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/dgf/go-fbp-x/pkg/process"
 	"github.com/dgf/go-fbp-x/pkg/util"
@@ -14,6 +15,21 @@ type get struct {
 	out     chan any
 	timeout chan any
 	url     chan any
+}
+
+func fetch(url string, timeout time.Duration) (string, error) {
+	client := http.Client{Timeout: timeout}
+
+	if req, err := http.NewRequest(http.MethodGet, url, nil); err != nil {
+		return "", fmt.Errorf("could not create http/Get request: %w", err)
+	} else if res, err := client.Do(req); err != nil {
+		return "", fmt.Errorf("could not do http/Get request: %w", err)
+	} else if body, err := io.ReadAll(res.Body); err != nil {
+		return "", fmt.Errorf("could not read http/Get response: %w", err)
+	} else {
+		defer res.Body.Close()
+		return string(body), nil
+	}
 }
 
 func Get() process.Process {
@@ -59,29 +75,11 @@ func Get() process.Process {
 					panic(fmt.Sprintf("Invalid http/Get url %v", u))
 				}
 
-				req, err := http.NewRequest(http.MethodGet, url, nil)
-				if err != nil {
-					g.err <- fmt.Sprintf("could not create http/Get request: %v", err)
-					return
+				if body, err := fetch(url, timeout); err != nil {
+					g.err <- err.Error()
+				} else {
+					g.out <- string(body)
 				}
-
-				client := http.Client{
-					Timeout: timeout,
-				}
-
-				resp, err := client.Do(req)
-				if err != nil {
-					g.err <- fmt.Sprintf("could not do http/Get request: %v", err)
-					return
-				}
-
-				body, err := io.ReadAll(resp.Body)
-				if err != nil {
-					g.err <- fmt.Sprintf("could not read http/Get response: %v", err)
-					return
-				}
-
-				g.out <- string(body)
 			}
 		}
 	}()
