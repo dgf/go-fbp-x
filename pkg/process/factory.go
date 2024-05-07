@@ -9,24 +9,24 @@ import (
 )
 
 type Factory interface {
-	Create(name string) (Process, bool)
+	Create(name string, meta map[string]string) (Process, bool)
 	Procs() map[string]Process
 	String() string
 }
 
 type factory struct {
-	procs map[string]func() Process
+	procs map[string]func(map[string]string) Process
 }
 
-func NewFactory(procs map[string]func() Process) Factory {
-	return &factory{procs: procs}
+func NewFactory(procs map[string]func(map[string]string) Process) Factory {
+	return &factory{procs}
 }
 
-func (f *factory) Create(name string) (Process, bool) {
+func (f *factory) Create(name string, meta map[string]string) (Process, bool) {
 	if fn, ok := f.procs[name]; !ok {
 		return nil, false
 	} else {
-		return fn(), true
+		return fn(meta), true
 	}
 }
 
@@ -49,7 +49,7 @@ func portsDoc[S fmt.Stringer](ports map[string]S) string {
 func (f *factory) Procs() map[string]Process {
 	procs := map[string]Process{}
 	for name, proc := range f.procs {
-		procs[name] = proc()
+		procs[name] = proc(nil)
 	}
 	return procs
 }

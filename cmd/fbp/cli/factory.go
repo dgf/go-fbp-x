@@ -9,17 +9,23 @@ import (
 	"github.com/dgf/go-fbp-x/pkg/process/text"
 )
 
+func withoutMeta(fn func() process.Process) func(map[string]string) process.Process {
+	return func(map[string]string) process.Process {
+		return fn()
+	}
+}
+
 func NewFactory(out chan<- string) process.Factory {
-	return process.NewFactory(map[string]func() process.Process{
-		"core/Clone":  func() process.Process { return core.Clone() },
-		"core/Count":  func() process.Process { return core.Count() },
-		"core/Kick":   func() process.Process { return core.Kick() },
-		"core/Output": func() process.Process { return core.Output(out) },
-		"core/Tick":   func() process.Process { return core.Tick() },
-		"fs/ReadFile": func() process.Process { return filesystem.ReadFile() },
-		"html/Query":  func() process.Process { return html.Query() },
-		"http/Get":    func() process.Process { return http.Get() },
-		"text/Append": func() process.Process { return text.Append() },
-		"text/Split":  func() process.Process { return text.Split() },
+	return process.NewFactory(map[string]func(map[string]string) process.Process{
+		"core/Clone":  withoutMeta(core.Clone),
+		"core/Count":  withoutMeta(core.Count),
+		"core/Kick":   withoutMeta(core.Kick),
+		"core/Output": func(map[string]string) process.Process { return core.Output(out) },
+		"core/Tick":   withoutMeta(core.Tick),
+		"fs/ReadFile": withoutMeta(filesystem.ReadFile),
+		"html/Query":  withoutMeta(html.Query),
+		"http/Get":    withoutMeta(http.Get),
+		"text/Append": withoutMeta(text.Append),
+		"text/Split":  withoutMeta(text.Split),
 	})
 }

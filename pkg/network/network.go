@@ -44,7 +44,7 @@ func (n *net) reference(components map[string]dsl.Process) error {
 	n.processes = map[string]process.Process{}
 
 	for component, process := range components {
-		if pf, ok := n.factory.Create(process.Name); !ok {
+		if pf, ok := n.factory.Create(process.Name, process.Meta); !ok {
 			return fmt.Errorf("process %q not available", process)
 		} else {
 			n.processes[component] = pf
