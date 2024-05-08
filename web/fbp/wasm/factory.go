@@ -23,7 +23,7 @@ func NewFactory(out chan<- string) process.Factory {
 		"core/Tick":   withoutMeta(core.Tick),
 		"html/Query":  withoutMeta(html.Query),
 		"http/Get":    withoutMeta(http.Get),
-		"text/Append": withoutMeta(text.Append),
+		"text/Append": text.Append,
 		"text/Split":  withoutMeta(text.Split),
 	})
 }

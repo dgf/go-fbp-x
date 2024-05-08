@@ -12,11 +12,16 @@ type append struct {
 	out   chan any
 }
 
-func Append() process.Process {
+func Append(meta map[string]string) process.Process {
 	a := &append{
 		in:    make(chan any, 1),
 		affix: make(chan any, 1),
 		out:   make(chan any, 1),
+	}
+
+	sep := ""
+	if ms, ok := meta["sep"]; ok {
+		sep = ms
 	}
 
 	go func() {
@@ -33,7 +38,7 @@ func Append() process.Process {
 				return
 			}
 
-			a.out <- fmt.Sprintf("%v%v", in, affix)
+			a.out <- fmt.Sprintf("%v%s%v", in, sep, affix)
 		}
 	}()
 

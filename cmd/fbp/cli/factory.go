@@ -17,15 +17,17 @@ func withoutMeta(fn func() process.Process) func(map[string]string) process.Proc
 
 func NewFactory(out chan<- string) process.Factory {
 	return process.NewFactory(map[string]func(map[string]string) process.Process{
-		"core/Clone":  withoutMeta(core.Clone),
-		"core/Count":  withoutMeta(core.Count),
-		"core/Kick":   withoutMeta(core.Kick),
-		"core/Output": func(map[string]string) process.Process { return core.Output(out) },
-		"core/Tick":   withoutMeta(core.Tick),
-		"fs/ReadFile": withoutMeta(filesystem.ReadFile),
-		"html/Query":  withoutMeta(html.Query),
-		"http/Get":    withoutMeta(http.Get),
-		"text/Append": withoutMeta(text.Append),
-		"text/Split":  withoutMeta(text.Split),
+		"core/Clone":     withoutMeta(core.Clone),
+		"core/Count":     withoutMeta(core.Count),
+		"core/Kick":      withoutMeta(core.Kick),
+		"core/Output":    func(map[string]string) process.Process { return core.Output(out) },
+		"core/Tick":      withoutMeta(core.Tick),
+		"fs/ReadFile":    withoutMeta(filesystem.ReadFile),
+		"html/Attribute": withoutMeta(html.Attribute),
+		"html/Query":     withoutMeta(html.Query),
+		"html/Text":      withoutMeta(html.Text),
+		"http/Get":       withoutMeta(http.Get),
+		"text/Append":    text.Append,
+		"text/Split":     withoutMeta(text.Split),
 	})
 }
