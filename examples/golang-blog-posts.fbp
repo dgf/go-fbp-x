@@ -1,4 +1,30 @@
-'3S' -> TIMEOUT Get(http/Get)
-'https://go.dev/blog/' -> URL Get OUT -> IN SelectPosts(html/Query) OUT -> IN Display(core/Output)
-'.blogtitle a' -> SEL SelectPosts ERR -> IN Display
-Get ERR -> IN Display
+# HTTP client for fetch HTML
+'https://go.dev/blog/' -> URL GetPosts(http/Get)
+'3S' -> TIMEOUT GetPosts ERR -> IN Display(core/Output)
+
+# HTML selectors to extract data points
+'.blogtitle' -> SEL SelectPosts(html/Query)        ERR -> IN Display
+'.author'    -> SEL SelectAuthor(html/Query)       ERR -> IN Display
+'.date'      -> SEL SelectDate(html/Query)         ERR -> IN Display
+'a'          -> SEL SelectLinkTag(html/Query)      ERR -> IN Display
+'href'       -> SEL SelectLinkHref(html/Attribute) ERR -> IN Display
+
+# get elements from HTML doc
+GetPosts       OUT -> IN SelectPosts
+SelectPosts    OUT -> IN SelectAuthor
+SelectPosts    OUT -> IN SelectDate
+SelectPosts    OUT -> IN SelectLinkTag
+
+# get and concat text of elements
+SelectDate     OUT -> IN SelectDateText(html/Text)   OUT -> IN AppendAuthor(text/Append:sep=|)
+SelectAuthor   OUT -> IN SelectAuthorText(html/Text) OUT -> AFFIX AppendAuthor
+SelectLinkTag  OUT -> IN SelectTitle(html/Text)      OUT -> AFFIX AppendTitle(text/Append:sep=|)
+AppendAuthor   OUT -> IN AppendTitle
+AppendTitle    OUT -> IN AppendLink(text/Append:sep=|)
+
+# get, prefix and concat link
+'https://go.dev' -> DATA KickLinkPrefix(core/Kick)
+SelectLinkTag  OUT -> IN SelectLinkHref OUT -> IN KickLinkPrefix OUT -> IN AppendLinkPath(text/Append)
+SelectLinkHref OUT -> AFFIX AppendLinkPath OUT -> AFFIX AppendLink
+AppendLink     OUT -> IN Display
+
