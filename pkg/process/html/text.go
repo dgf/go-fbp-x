@@ -21,7 +21,7 @@ func innerText(in string) string {
 			return ""
 		}
 		if tt == html.TextToken {
-			return t.Token().Data
+			return strings.TrimSpace(t.Token().Data)
 		}
 	}
 }
