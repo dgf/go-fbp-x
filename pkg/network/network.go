@@ -20,6 +20,7 @@ type packet struct {
 }
 
 type targetChannel struct {
+	convert func(any) any
 	channel chan<- any
 	dsl.Link
 }
@@ -68,12 +69,12 @@ func (n *net) connect(connections []dsl.Connection) error {
 			return fmt.Errorf("source %q not registered", c.Source.Component)
 		} else if output, ok := source.Outputs()[c.Source.Port]; !ok {
 			return fmt.Errorf("output %q on source %q not available", c.Source.Port, c.Source.Component)
-		} else if !process.IsCompatibleIPType(output.IPType, input.IPType) {
-			return fmt.Errorf("unmatched connection type from %v to %v", c.Source, c.Target)
+		} else if convert, err := process.ConvertIP(output.IPType, input.IPType); err != nil {
+			return fmt.Errorf("unmatched connection type from %v to %v: %w", c.Source, c.Target, err)
 		} else if d, ok := n.demuxes[c.Source]; ok {
-			d.targets = append(d.targets, targetChannel{input.Channel, c.Target})
+			d.targets = append(d.targets, targetChannel{convert, input.Channel, c.Target})
 		} else {
-			n.demuxes[c.Source] = &demux{output.Channel, []targetChannel{{input.Channel, c.Target}}}
+			n.demuxes[c.Source] = &demux{output.Channel, []targetChannel{{convert, input.Channel, c.Target}}}
 		}
 	}
 
@@ -101,7 +102,7 @@ func (n *net) Run(ctx context.Context, graph dsl.Graph, traces chan<- Trace) err
 						return
 					default:
 						traces <- Trace{value, dsl.Connection{Source: link, Target: target.Link}}
-						target.channel <- value
+						target.channel <- target.convert(value)
 					}
 				}
 			}

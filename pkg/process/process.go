@@ -1,5 +1,7 @@
 package process
 
+import "errors"
+
 type IPType int64
 
 const (
@@ -24,8 +26,18 @@ type Process interface {
 	Outputs() map[string]Output
 }
 
-func IsCompatibleIPType(source IPType, target IPType) bool {
-	return source == target || target == AnyIP
+func ConvertIP(source, target IPType) (func(any) any, error) {
+	if source == target || target == AnyIP {
+		return func(in any) any {
+			return in
+		}, nil
+	}
+	if source == AnyIP && target == StringIP {
+		return func(in any) any {
+			return in.(string)
+		}, nil
+	}
+	return nil, errors.New("no converter available")
 }
 
 func (ipt IPType) String() string {

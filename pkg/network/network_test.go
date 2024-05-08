@@ -31,7 +31,7 @@ func newFactory(out chan<- string) process.Factory {
 		"core/Output": func(map[string]string) process.Process { return core.Output(out) },
 		"core/Tick":   withoutMeta(core.Tick),
 		"fs/ReadFile": withoutMeta(filesystem.ReadFile),
-		"text/Append": withoutMeta(text.Append),
+		"text/Append": text.Append,
 		"text/Split":  withoutMeta(text.Split),
 	})
 }
