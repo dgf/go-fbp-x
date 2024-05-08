@@ -1,0 +1,7 @@
+'https://heise.de/' -> URL News(http/Get)
+'3S' -> TIMEOUT News ERR -> IN Display(core/Output)
+
+'article' -> SEL Article(html/Query) ERR -> IN Display
+'[data-component=TeaserHeadline]' -> SEL Headline(html/Query) ERR -> IN Display
+
+News OUT -> IN Article OUT -> IN Headline OUT -> IN HeadlineText(html/Text) OUT -> IN Display
