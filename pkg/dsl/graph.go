@@ -9,10 +9,14 @@ import (
 	"golang.org/x/exp/maps"
 )
 
+type Port struct {
+	Name  string
+	Index int
+}
+
 type Link struct {
 	Component string
-	Port      string
-	Index     int
+	Port
 }
 
 type Connection struct {
@@ -31,12 +35,12 @@ type Graph struct {
 	Connections []Connection
 }
 
-func portLabel(l Link) string {
+func (p Port) String() string {
 	sb := strings.Builder{}
-	sb.WriteString(l.Port)
-	if l.Index > 0 {
+	sb.WriteString(p.Name)
+	if p.Index > 0 {
 		sb.WriteString("[")
-		sb.WriteString(strconv.Itoa(l.Index))
+		sb.WriteString(strconv.Itoa(p.Index))
 		sb.WriteString("]")
 	}
 	return sb.String()
@@ -45,9 +49,9 @@ func portLabel(l Link) string {
 func (c Connection) String() string {
 	target := c.Target
 	if len(c.Data) > 0 {
-		return fmt.Sprintf("%s > %s %s", c.Data, portLabel(target), target.Component)
+		return fmt.Sprintf("%s > %s %s", c.Data, target.Port, target.Component)
 	} else {
-		return fmt.Sprintf("%s %s > %s %s", c.Source.Component, portLabel(c.Source), portLabel(target), target.Component)
+		return fmt.Sprintf("%s %s > %s %s", c.Source.Component, c.Source.Port, target.Port, target.Component)
 	}
 }
 

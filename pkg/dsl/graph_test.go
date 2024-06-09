@@ -8,6 +8,52 @@ import (
 	"github.com/dgf/go-fbp-x/pkg/dsl"
 )
 
+func ExamplePort_String() {
+	for _, p := range []dsl.Port{
+		{Name: "name"},
+		{Name: "zero", Index: 0},
+		{Name: "one", Index: 1},
+		{Name: "two", Index: 2},
+	} {
+		fmt.Println(p.String())
+	}
+	// Output:
+	//
+	// name
+	// zero
+	// one[1]
+	// two[2]
+}
+
+func ExampleConnection_String() {
+	for _, c := range []dsl.Connection{
+		{Data: "data", Target: dsl.Link{Component: "target", Port: dsl.Port{Name: "in"}}},
+		{
+			Source: dsl.Link{Component: "source", Port: dsl.Port{Name: "out"}},
+			Target: dsl.Link{Component: "target", Port: dsl.Port{Name: "in"}},
+		},
+	} {
+		fmt.Println(c.String())
+	}
+	// Output:
+	//
+	// data > in target
+	// source out > in target
+}
+
+func ExampleProcess_String() {
+	for _, p := range []dsl.Process{
+		{Name: "name"},
+		{Name: "meta", Meta: map[string]string{"key": "value"}},
+	} {
+		fmt.Println(p.String())
+	}
+	// Output:
+	//
+	// name
+	// meta:key=value
+}
+
 func ExampleString() {
 	g := dsl.Graph{
 		Components: map[string]dsl.Process{
@@ -16,10 +62,10 @@ func ExampleString() {
 			"three": {Name: "DoElse"},
 		},
 		Connections: []dsl.Connection{
-			{Data: "data", Target: dsl.Link{Port: "in", Component: "one"}},
-			{Source: dsl.Link{Port: "out", Component: "one"}, Target: dsl.Link{Port: "in", Component: "two"}},
-			{Source: dsl.Link{Port: "out", Component: "one"}, Target: dsl.Link{Port: "in", Index: 1, Component: "three"}},
-			{Source: dsl.Link{Port: "out", Index: 1, Component: "two"}, Target: dsl.Link{Port: "in", Index: 2, Component: "three"}},
+			{Data: "data", Target: dsl.Link{Port: dsl.Port{Name: "in"}, Component: "one"}},
+			{Source: dsl.Link{Port: dsl.Port{Name: "out"}, Component: "one"}, Target: dsl.Link{Port: dsl.Port{Name: "in"}, Component: "two"}},
+			{Source: dsl.Link{Port: dsl.Port{Name: "out"}, Component: "one"}, Target: dsl.Link{Port: dsl.Port{Name: "in", Index: 1}, Component: "three"}},
+			{Source: dsl.Link{Port: dsl.Port{Name: "out", Index: 1}, Component: "two"}, Target: dsl.Link{Port: dsl.Port{Name: "in", Index: 2}, Component: "three"}},
 		},
 	}
 

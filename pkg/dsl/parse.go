@@ -86,7 +86,10 @@ func link(component, port string) Link {
 		portName = portAndIndex[1]
 		index, _ = strconv.Atoi(portAndIndex[2]) // hint: number matched by regexp
 	}
-	return Link{Component: component, Port: strings.ToLower(portName), Index: index}
+	return Link{
+		Component: component,
+		Port:      Port{Name: strings.ToLower(portName), Index: index},
+	}
 }
 
 func Parse(src io.Reader) (Graph, error) {

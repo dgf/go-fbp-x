@@ -45,10 +45,10 @@ func (n *net) reference(components map[string]dsl.Process) error {
 	n.processes = map[string]process.Process{}
 
 	for component, process := range components {
-		if pf, ok := n.factory.Create(process.Name, process.Meta); !ok {
+		if p, ok := n.factory.Create(process.Name, process.Meta); !ok {
 			return fmt.Errorf("process %q not available", process)
 		} else {
-			n.processes[component] = pf
+			n.processes[component] = p
 		}
 	}
 
@@ -61,13 +61,13 @@ func (n *net) connect(connections []dsl.Connection) error {
 	for _, c := range connections {
 		if target, ok := n.processes[c.Target.Component]; !ok {
 			return fmt.Errorf("target %q not registered", c.Target.Component)
-		} else if input, ok := target.Inputs()[c.Target.Port]; !ok {
+		} else if input, ok := target.Inputs()[c.Target.Port.Name]; !ok {
 			return fmt.Errorf("input %q on target %q not available", c.Target.Port, c.Target.Component)
 		} else if len(c.Data) > 0 {
 			n.initialIPs = append(n.initialIPs, packet{input.Channel, c.Data, c})
 		} else if source, ok := n.processes[c.Source.Component]; !ok {
 			return fmt.Errorf("source %q not registered", c.Source.Component)
-		} else if output, ok := source.Outputs()[c.Source.Port]; !ok {
+		} else if output, ok := source.Outputs()[c.Source.Port.Name]; !ok {
 			return fmt.Errorf("output %q on source %q not available", c.Source.Port, c.Source.Component)
 		} else if convert, err := process.ConvertIP(output.IPType, input.IPType); err != nil {
 			return fmt.Errorf("unmatched connection type from %v to %v: %w", c.Source, c.Target, err)

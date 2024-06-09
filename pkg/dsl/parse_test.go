@@ -9,13 +9,13 @@ import (
 )
 
 func DataTarget(data, port, component string) dsl.Connection {
-	return dsl.Connection{Data: data, Target: dsl.Link{Port: port, Component: component}}
+	return dsl.Connection{Data: data, Target: dsl.Link{Port: dsl.Port{Name: port}, Component: component}}
 }
 
 func SourceTargetIndex(sComp, sPort string, sIndex, tIndex int, tPort, tComp string) dsl.Connection {
 	return dsl.Connection{
-		Source: dsl.Link{Port: sPort, Index: sIndex, Component: sComp},
-		Target: dsl.Link{Port: tPort, Index: tIndex, Component: tComp},
+		Source: dsl.Link{Port: dsl.Port{Name: sPort, Index: sIndex}, Component: sComp},
+		Target: dsl.Link{Port: dsl.Port{Name: tPort, Index: tIndex}, Component: tComp},
 	}
 }
 
