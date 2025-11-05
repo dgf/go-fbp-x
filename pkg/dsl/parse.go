@@ -1,8 +1,3 @@
-// parsing FBP Graph DSL, see https://github.com/flowbased/fbp#readme
-//
-// current limitation:
-// - component meta data is ignored
-// - annotations are removed before processing
 package dsl
 
 import (
@@ -92,6 +87,11 @@ func link(component, port string) Link {
 	}
 }
 
+// Parse FBP Graph DSL, see https://github.com/flowbased/fbp#readme
+//
+// current limitation:
+// - component meta data is ignored
+// - annotations are removed before processing
 func Parse(src io.Reader) (Graph, error) {
 	graph := Graph{
 		Components: map[string]Process{},
