@@ -14,3 +14,18 @@ Run a process benchmark three times
 ```sh
 go test -bench=. ./pkg/process/core/tick_test.go -benchmem -count=3
 ```
+
+## Local Go Runs
+
+Show last 'The Go Blog' posts
+
+```sh
+go run cmd/fbp/main.go run examples/golang-blog-posts.fbp
+```
+
+Build and Serve the WASM version locally
+
+```sh
+GOOS=js GOARCH=wasm go build -o web/static/main.wasm web/fbp/main.go
+go run cmd/fbp/main.go serve
+```
