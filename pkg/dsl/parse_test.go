@@ -29,43 +29,122 @@ func TestParse(t *testing.T) {
 		fbp   string
 		graph dsl.Graph
 	}{
-		{"empty", "", dsl.Graph{}},
-		{"one comment", "# comment", dsl.Graph{}},
-		{"one component", "in call", dsl.Graph{}},
-		{"one data element", "'data'", dsl.Graph{}},
-		{"one data input", "'data' -> in component( process )", dsl.Graph{
-			Components:  map[string]dsl.Process{"component": {Name: "process"}},
-			Connections: []dsl.Connection{DataTarget("data", "in", "component")},
-		}},
-		{"process meta data", "'data' -> in component(process: key = value , num= 123,flag =true)", dsl.Graph{
-			Components: map[string]dsl.Process{"component": {
-				Name: "process", Meta: map[string]string{"flag": "true", "key": "value", "num": "123"},
-			}},
-			Connections: []dsl.Connection{DataTarget("data", "in", "component")},
-		}},
-		{"two connections triple", "'data' -> in one(do) out -> IN two(do)", dsl.Graph{
-			Components:  map[string]dsl.Process{"one": {Name: "do"}, "two": {Name: "do"}},
-			Connections: []dsl.Connection{DataTarget("data", "in", "one"), SourceTarget("one", "out", "in", "two")},
-		}},
-		{"two connections separated", "'data' -> IN one(do)\none OUT -> in two(do)", dsl.Graph{
-			Components:  map[string]dsl.Process{"one": {Name: "do"}, "two": {Name: "do"}},
-			Connections: []dsl.Connection{DataTarget("data", "in", "one"), SourceTarget("one", "out", "in", "two")},
-		}},
-		{"split output", "one(do) out -> in two(do)\none out -> in three(do)", dsl.Graph{
-			Components:  map[string]dsl.Process{"one": {Name: "do"}, "two": {Name: "do"}, "three": {Name: "do"}},
-			Connections: []dsl.Connection{SourceTarget("one", "out", "in", "two"), SourceTarget("one", "out", "in", "three")},
-		}},
-		{"join input", "one(do) out -> in three(do)\ntwo(do) out -> IN three", dsl.Graph{
-			Components:  map[string]dsl.Process{"one": {Name: "do"}, "two": {Name: "do"}, "three": {Name: "do"}},
-			Connections: []dsl.Connection{SourceTarget("one", "out", "in", "three"), SourceTarget("two", "out", "in", "three")},
-		}},
-		{"index in and out", "one(do) out[1] -> in[1] three(do)\ntwo(do) out[1] -> in[2] three", dsl.Graph{
-			Components: map[string]dsl.Process{"one": {Name: "do"}, "two": {Name: "do"}, "three": {Name: "do"}},
-			Connections: []dsl.Connection{
-				SourceTargetIndex("one", "out", 1, 1, "in", "three"),
-				SourceTargetIndex("two", "out", 1, 2, "in", "three"),
+		{
+			name:  "empty",
+			fbp:   "",
+			graph: dsl.Graph{},
+		},
+		{
+			name:  "one comment",
+			fbp:   "# comment",
+			graph: dsl.Graph{},
+		},
+		{
+			name:  "one component",
+			fbp:   "in call",
+			graph: dsl.Graph{},
+		},
+		{
+			name:  "one data element",
+			fbp:   "'data'",
+			graph: dsl.Graph{},
+		},
+		{
+			name: "one data input",
+			fbp:  "'data' -> in component( process )",
+			graph: dsl.Graph{
+				Components: map[string]dsl.Process{
+					"component": {Name: "process"},
+				},
+				Connections: []dsl.Connection{
+					DataTarget("data", "in", "component"),
+				},
 			},
-		}},
+		},
+		{
+			name: "process meta data",
+			fbp:  "'data' -> in component(process: key = value , num= 123,flag =true)",
+			graph: dsl.Graph{
+				Components: map[string]dsl.Process{
+					"component": {Name: "process", Meta: map[string]string{"flag": "true", "key": "value", "num": "123"}},
+				},
+				Connections: []dsl.Connection{
+					DataTarget("data", "in", "component"),
+				},
+			},
+		},
+		{
+			name: "two connections triple",
+			fbp:  "'data' -> in one(do) out -> IN two(do)",
+			graph: dsl.Graph{
+				Components: map[string]dsl.Process{
+					"one": {Name: "do"},
+					"two": {Name: "do"},
+				},
+				Connections: []dsl.Connection{
+					DataTarget("data", "in", "one"),
+					SourceTarget("one", "out", "in", "two"),
+				},
+			},
+		},
+		{
+			name: "two connections separated",
+			fbp:  "'data' -> IN one(do)\none OUT -> in two(do)",
+			graph: dsl.Graph{
+				Components: map[string]dsl.Process{
+					"one": {Name: "do"},
+					"two": {Name: "do"},
+				},
+				Connections: []dsl.Connection{
+					DataTarget("data", "in", "one"),
+					SourceTarget("one", "out", "in", "two"),
+				},
+			},
+		},
+		{
+			name: "split output", fbp: "one(do) out -> in two(do)\none out -> in three(do)",
+			graph: dsl.Graph{
+				Components: map[string]dsl.Process{
+					"one":   {Name: "do"},
+					"two":   {Name: "do"},
+					"three": {Name: "do"},
+				},
+				Connections: []dsl.Connection{
+					SourceTarget("one", "out", "in", "two"),
+					SourceTarget("one", "out", "in", "three"),
+				},
+			},
+		},
+		{
+			name: "join input",
+			fbp:  "one(do) out -> in three(do)\ntwo(do) out -> IN three",
+			graph: dsl.Graph{
+				Components: map[string]dsl.Process{
+					"one":   {Name: "do"},
+					"two":   {Name: "do"},
+					"three": {Name: "do"},
+				},
+				Connections: []dsl.Connection{
+					SourceTarget("one", "out", "in", "three"),
+					SourceTarget("two", "out", "in", "three"),
+				},
+			},
+		},
+		{
+			name: "index in and out",
+			fbp:  "one(do) out[1] -> in[1] three(do)\ntwo(do) out[1] -> in[2] three",
+			graph: dsl.Graph{
+				Components: map[string]dsl.Process{
+					"one":   {Name: "do"},
+					"two":   {Name: "do"},
+					"three": {Name: "do"},
+				},
+				Connections: []dsl.Connection{
+					SourceTargetIndex("one", "out", 1, 1, "in", "three"),
+					SourceTargetIndex("two", "out", 1, 2, "in", "three"),
+				},
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if g, err := dsl.Parse(strings.NewReader(tc.fbp)); err != nil {

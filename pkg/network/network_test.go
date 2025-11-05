@@ -43,30 +43,55 @@ func TestRun(t *testing.T) {
 		out  []string
 		ord  bool
 	}{
-		{name: "output data input", out: []string{"test"}, fbp: "'test' -> IN Display(core/Output)"},
-		{name: "unknown file", out: []string{"open not-found.txt: no such file or directory"}, fbp: `
-                'not-found.txt' -> IN Read(fs/ReadFile) ERR -> IN Display(core/Output)`},
-		{name: "slurp multi inputs", out: []string{"one", "two"}, fbp: `
-                'one' -> IN Display(core/Output)
-                'two' -> IN Display`},
-		{name: "demux output", out: []string{"one", "one"}, fbp: `
-                'one' -> IN Demux(core/Clone) OUT -> IN Display1(core/Output)
-                Demux OUT -> IN Display2(core/Output)`},
-		{name: "split string", out: []string{"one", "two"}, ord: true, fbp: `
-                '|' -> SEP Split(text/Split)
-                'one|two' -> IN Split OUT -> IN Display(core/Output)`},
-		{name: "count two ticks", out: []string{"1bang", "2bang"}, ord: true, fbp: `
-                '0.001S' -> INTV Ticker(core/Tick)
-                'bang' -> DATA Ticker OUT -> IN Count(core/Count) OUT -> IN Append(text/Append)
-                Ticker OUT -> AFFIX Append OUT -> IN Display(core/Output)`},
-		{name: "count lines of text file", out: []string{"1 one", "2 two", "3 three"}, ord: true, fbp: `
-                '\n' -> SEP Split(text/Split)
-                ' ' -> DATA Space(core/Kick)
-                'testdata/three-lines.txt' -> IN Read(fs/ReadFile)
-                Read OUT -> IN Split OUT -> IN Count(core/Count) OUT -> IN CountAndSpace(text/Append)
-                Count OUT -> IN Space OUT -> AFFIX CountAndSpace OUT -> IN CountAndLine(text/Append)
-                Split OUT -> AFFIX CountAndLine OUT -> IN Display(core/Output)
-                Read ERR -> IN Display`},
+		{
+			name: "output data input",
+			out:  []string{"test"},
+			fbp:  "'test' -> IN Display(core/Output)",
+		},
+		{
+			name: "unknown file",
+			out:  []string{"open not-found.txt: no such file or directory"},
+			fbp:  "'not-found.txt' -> IN Read(fs/ReadFile) ERR -> IN Display(core/Output)",
+		},
+		{
+			name: "slurp multi inputs",
+			out:  []string{"one", "two"},
+			fbp: `'one' -> IN Display(core/Output)
+            'two' -> IN Display`,
+		},
+		{
+			name: "demux output",
+			out:  []string{"one", "one"},
+			fbp: `'one' -> IN Demux(core/Clone) OUT -> IN Display1(core/Output)
+            Demux OUT -> IN Display2(core/Output)`,
+		},
+		{
+			name: "split string",
+			out:  []string{"one", "two"},
+			ord:  true,
+			fbp: `'|' -> SEP Split(text/Split)
+            'one|two' -> IN Split OUT -> IN Display(core/Output)`,
+		},
+		{
+			name: "count two ticks",
+			out:  []string{"1bang", "2bang"},
+			ord:  true,
+			fbp: `'0.001S' -> INTV Ticker(core/Tick)
+            'bang' -> DATA Ticker OUT -> IN Count(core/Count) OUT -> IN Append(text/Append)
+            Ticker OUT -> AFFIX Append OUT -> IN Display(core/Output)`,
+		},
+		{
+			name: "count lines of text file",
+			out:  []string{"1 one", "2 two", "3 three"},
+			ord:  true,
+			fbp: `'\n' -> SEP Split(text/Split)
+            ' ' -> DATA Space(core/Kick)
+            'testdata/three-lines.txt' -> IN Read(fs/ReadFile)
+            Read OUT -> IN Split OUT -> IN Count(core/Count) OUT -> IN CountAndSpace(text/Append)
+            Count OUT -> IN Space OUT -> AFFIX CountAndSpace OUT -> IN CountAndLine(text/Append)
+            Split OUT -> AFFIX CountAndLine OUT -> IN Display(core/Output)
+            Read ERR -> IN Display`,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			graph, err := dsl.Parse(strings.NewReader(tc.fbp))
